@@ -138,6 +138,21 @@
   .sheet .save{margin-top:12px;width:100%;padding:15px;border-radius:14px;background:var(--accent);color:#fff;font-weight:600;font-size:15px}
   .sheet p.small{font-size:14px;color:var(--ink2);margin-top:8px;line-height:1.5}
   .sheet a{color:var(--accent);font-weight:600}
+
+  .search{display:flex;gap:8px;margin-top:14px}
+  .search input{flex:1;min-width:0;padding:13px 15px;border-radius:14px;border:1px solid var(--line);background:var(--paper);
+                color:var(--ink);font:15px var(--sans);-webkit-appearance:none}
+  .search button{padding:0 16px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font-weight:600;font-size:15px}
+  .mapbtn{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:9px;padding:15px;border-radius:16px;
+          background:var(--accent);color:#fff;font-weight:600;font-size:15.5px;text-decoration:none}
+  .mapbtn svg{width:20px;height:20px}
+  .sample{display:block;margin:14px auto 0;font-size:14px;font-weight:600;color:var(--ink3)}
+  .stop .ph{width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none;background:var(--line)}
+  .now .pic{display:block;width:calc(100% + 40px);margin:-20px -20px 16px;height:170px;object-fit:cover;background:var(--line)}
+  .loading{padding:34px 20px;text-align:center;color:var(--ink3);font-size:15px}
+  .loading i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);
+             animation:spin .8s linear infinite;vertical-align:-4px;margin-right:8px}
+  .src{font-size:12px;color:var(--ink3);margin-top:10px}
 </style>
 </head>
 <body>
@@ -149,7 +164,7 @@
 
   <div class="hero">
     <div class="eyebrow" id="eyebrow"></div>
-    <h1>Galata</h1>
+    <h1 id="place">Galata</h1>
     <p id="intro"></p>
   </div>
 
@@ -157,10 +172,13 @@
   <button class="cam-btn" id="camBtn"></button>
   <button class="locate" id="locate"></button>
   <p class="note" id="note"></p>
+  <form class="search" id="search"><input id="q" type="search" enterkeyhint="search" autocomplete="off"><button id="qBtn" type="submit"></button></form>
 
   <section>
     <div class="sh"><h3 id="routeTitle"></h3><span id="routeMeta"></span></div>
     <div class="card route" id="route"></div>
+    <a class="mapbtn" id="mapBtn" target="_blank" rel="noopener"></a>
+    <button class="sample" id="sample"></button>
   </section>
 </div>
 
@@ -186,7 +204,7 @@
 </div>
 
 <script>
-const STOPS = [
+const GALATA = [
   { id:"kule", lat:41.02560, lng:28.97415,
     tr:{ ad:"Galata Kulesi", kisa:"Cenevizlilerin 1348'de diktiği kule",
       metin:"Galata Kulesi, 1348 yılında Cenevizliler tarafından Galata surlarının en yüksek noktası olarak inşa edildi. O dönemki adı, İsa Kulesi anlamına gelen Christea Turris'ti. Osmanlı döneminde gözetleme ve yangın kulesi olarak kullanıldı; şehirde çıkan yangınlar buradan görülüp haber veriliyordu. Evliya Çelebi, on yedinci yüzyılda Hezârfen Ahmed Çelebi'nin kendi yaptığı kanatlarla bu kuleden atlayıp Üsküdar'a süzüldüğünü anlatır. Bunun gerçek mi efsane mi olduğu hâlâ tartışılır. Yaklaşık altmış yedi metre yüksekliğindeki kule bugün müze olarak ziyaret ediliyor; tepesindeki terastan Haliç, Boğaz ve Tarihi Yarımada tek bakışta görülüyor." },
@@ -221,6 +239,11 @@ const UI = {
        located:"Konum açık · en yakın durak seçiliyor", far:"Galata'dan uzaktasın; durakları yine de dinleyebilirsin.",
        denied:"Konum izni verilmedi; durağı listeden seçebilirsin.", route:"Rota", stops:"5 durak",
        tabGezi:"Gezi", tabSky:"Gökyüzü", tabShop:"Alışveriş", soon:"Bu bölüm yakında geliyor", away:"uzakta",
+       eyebrowNear:"Gezi · bulunduğun yer", introNear:(n,km,yuru)=>`${n} durak, toplam yaklaşık ${km}${yuru?' yürüyüş':' yol'}. Durağa gel, dinle.`,
+       stopsN:n=>`${n} durak`, mapBtn:"Rotayı haritada başlat", searching:"Yakındaki gezilecek yerler aranıyor…",
+       none:"Bu çevrede kayıtlı gezilecek yer bulunamadı. Galata örnek turu gösteriliyor.", netErr:"Yerler yüklenemedi. İnternetini kontrol et.",
+       searchPh:"Şehir ya da semt ara (ör. Çankırı)", searchBtn:"Ara", notFound:"Bu yer bulunamadı", sample:"Örnek tur: Galata",
+       myPlace:"Bulunduğum yere dön", src:"Kaynak: Vikipedi", guideLoading:"Rehber anlatımı hazırlanıyor…",
        cam:"Kameraya tut", camHint:"Bir yapıya ya da tabelaya tut", scanning:"İnceleniyor…", seen:"Kameranın gördüğü",
        again:"Tekrar çek", unsure:"Emin olamadım", camErr:"Kamera açılamadı. Ayarlar'dan Safari'ye kamera izni ver.",
        aiErr:"Cevap alınamadı. İnternetini ya da anahtarını kontrol et.",
@@ -232,6 +255,11 @@ const UI = {
        located:"Location on · picking the nearest stop", far:"You're far from Galata, but you can still listen to every stop.",
        denied:"Location wasn't allowed; pick a stop from the list.", route:"Route", stops:"5 stops",
        tabGezi:"Walk", tabSky:"Sky", tabShop:"Shopping", soon:"This section is coming soon", away:"away",
+       eyebrowNear:"Walk · where you are", introNear:(n,km,yuru)=>`${n} stops, about ${km}${yuru?' on foot':' in total'}. Reach a stop, press play.`,
+       stopsN:n=>`${n} stops`, mapBtn:"Start the route in Maps", searching:"Looking for places to see nearby…",
+       none:"No listed sights around here. Showing the Galata sample tour.", netErr:"Couldn't load places. Check your connection.",
+       searchPh:"Search a city or area", searchBtn:"Go", notFound:"Place not found", sample:"Sample tour: Galata",
+       myPlace:"Back to where I am", src:"Source: Wikipedia", guideLoading:"Preparing the guide's story…",
        cam:"Point the camera", camHint:"Point at a building or a sign", scanning:"Looking…", seen:"What the camera sees",
        again:"Take another", unsure:"Not sure", camErr:"Couldn't open the camera. Allow camera access for Safari in Settings.",
        aiErr:"No answer came back. Check your connection or your key.",
@@ -241,7 +269,8 @@ const UI = {
 
 let lang = 'tr';
 try{ lang = localStorage.getItem('gep-lang') || ((navigator.language||'tr').startsWith('tr')?'tr':'en'); }catch(e){}
-let pos = null, selected = STOPS[0].id, manual = false, storyOpen = false, speaking = false, geoState = 'idle';
+let stops = GALATA, mode = 'galata', placeName = 'Galata', center = null, loadingNear = false, netErr = false;
+let pos = null, selected = GALATA[0].id, manual = false, storyOpen = false, speaking = false, geoState = 'idle';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -256,18 +285,34 @@ function render(){
   const u = UI[lang];
   document.documentElement.lang = lang;
   document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on', b.dataset.l===lang));
-  $('eyebrow').textContent=u.eyebrow; $('intro').textContent=u.intro;
-  $('routeTitle').textContent=u.route; $('routeMeta').textContent=u.stops;
+  const ref = center || pos;
+  $('place').textContent = placeName;
+  $('eyebrow').textContent = mode==='galata' ? u.eyebrow : u.eyebrowNear;
+  const km = routeLength();
+  $('intro').textContent = mode==='galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
+  $('routeTitle').textContent=u.route; $('routeMeta').textContent=u.stopsN(stops.length);
+  $('q').placeholder=u.searchPh; $('qBtn').textContent=u.searchBtn;
+  $('sample').textContent = mode==='galata' ? (pos ? u.myPlace : '') : u.sample;
+  $('sample').style.display = (mode==='galata' && !pos) ? 'none' : 'block';
+  $('mapBtn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>${esc(u.mapBtn)}`;
+  $('mapBtn').href = mapsLink();
+  if(loadingNear){
+    $('now').className='card now'; $('now').innerHTML=`<div class="loading"><i></i>${esc(u.searching)}</div>`;
+    $('route').innerHTML=''; $('mapBtn').style.display='none'; $('locate').style.display='none'; $('note').textContent=''; return;
+  }
+  $('mapBtn').style.display='flex';
   $('tabGezi').textContent=u.tabGezi;
   $('camBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.4"/></svg>${esc(u.cam)}`;
   $('tabSky').innerHTML=esc(u.tabSky); $('tabShop').innerHTML=esc(u.tabShop);
 
-  const s = STOPS.find(x=>x.id===selected), t = s[lang];
+  const s = stops.find(x=>x.id===selected) || stops[0], t = s[lang] || s.tr;
+  if(s.wiki) ensureGuide(s);
   const d = pos ? dist(pos, s) : null;
   const isHere = d!==null && d < 60;
   const label = isHere ? u.here : (pos && !manual ? u.nearest : (pos ? fmt(d)+' '+u.away : u.first));
   $('now').className = 'card now' + (isHere ? ' here' : '');
   $('now').innerHTML = `
+    ${s.img?`<img class="pic" src="${esc(s.img)}" alt="">`:''}
     <div class="tag">${esc(label)}</div>
     <h2>${esc(t.ad)}</h2>
     <div class="meta">${esc(t.kisa)}${d!==null && !isHere ? ' · '+fmt(d) : ''}</div>
@@ -277,21 +322,20 @@ function render(){
         : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'}</button>
       <div class="lbl"><b>${esc(speaking?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(u.minutes)}</span></div>
     </div>
-    <div class="story ${storyOpen?'open':''}">${esc(t.metin)}</div>
+    <div class="story ${storyOpen?'open':''}">${esc(t.metin)}${s.wiki?`<div class="src">${esc(t.rehber?u.src+' · Gemini':u.src)}</div>`:''}</div>
     <button class="toggle" id="toggle">${esc(storyOpen?u.hide:u.read)}</button>`;
   $('play').onclick = () => speaking ? stopSpeak() : speak(t.metin);
   $('toggle').onclick = () => { storyOpen=!storyOpen; render(); };
 
   $('locate').style.display = geoState==='on' ? 'none' : 'flex';
   $('locate').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>${esc(geoState==='wait'?u.locating:u.locate)}`;
-  const nearestD = pos ? Math.min(...STOPS.map(x=>dist(pos,x))) : null;
-  $('note').textContent = geoState==='denied' ? u.denied : (nearestD!==null && nearestD>3000 ? u.far : (geoState==='on' ? u.located : ''));
+  $('note').textContent = geoState==='denied' ? u.denied : (netErr ? u.netErr : (mode==='galata' && pos && dist(pos,GALATA[0])>3000 && !center ? u.none : ''));
 
-  $('route').innerHTML = STOPS.map((x,i)=>`
+  $('route').innerHTML = stops.map((x,i)=>`
     <button class="stop ${x.id===selected?'sel':''}" data-id="${x.id}">
       <span class="n">${i+1}</span>
-      <span class="t"><b>${esc(x[lang].ad)}</b><span>${esc(x[lang].kisa)}</span></span>
-      <span class="d">${pos?fmt(dist(pos,x)):''}</span>
+      <span class="t"><b>${esc((x[lang]||x.tr).ad)}</b><span>${esc((x[lang]||x.tr).kisa)}</span></span>
+      ${x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:`<span class="d">${pos?fmt(dist(pos,x)):''}</span>`}
     </button>`).join('');
   document.querySelectorAll('.stop').forEach(b=>b.onclick=()=>{
     if(b.dataset.id!==selected){ stopSpeak(); storyOpen=false; }
@@ -316,9 +360,11 @@ function stopSpeak(){ if('speechSynthesis' in window) speechSynthesis.cancel(); 
 function locate(){
   if(!navigator.geolocation){ geoState='denied'; return render(); }
   geoState='wait'; render();
+  let first = true;
   navigator.geolocation.watchPosition(p=>{
     pos = {lat:p.coords.latitude, lng:p.coords.longitude}; geoState='on';
-    if(!manual && !speaking){ selected = STOPS.reduce((a,b)=>dist(pos,a)<dist(pos,b)?a:b).id; }
+    if(first){ first=false; if(!center) loadNear(pos.lat, pos.lng); }
+    if(!manual && !speaking && !loadingNear){ selected = stops.reduce((a,b)=>dist(pos,a)<dist(pos,b)?a:b).id; }
     render();
   }, ()=>{ geoState='denied'; render(); }, {enableHighAccuracy:true, maximumAge:10000, timeout:20000});
 }
@@ -417,8 +463,118 @@ $('camClose').onclick = closeCam;
 $('shutter').onclick = shoot;
 $('camKey').onclick = () => { if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } showKeySheet(true); };
 
+
+/* ---------- Bulunduğun yerin rotası (Vikipedi) ---------- */
+const KEYS = {
+  tr:['cami','camii','mescit','kale','kalesi','müze','müzesi','han','hanı','hamam','hamamı','köprü','köprüsü','türbe','türbesi',
+      'mağara','mağarası','kilise','kilisesi','saray','sarayı','çeşme','çeşmesi','medrese','medresesi','külliye','külliyesi','bedesten',
+      'kule','kulesi','anıt','anıtı','tekke','dergâh','dergahı','kervansaray','şelale','şelalesi','kanyon','kanyonu','göl','gölü',
+      'tabiat parkı','milli park','antik','tiyatro','tiyatrosu','ören','höyük','höyüğü','konak','konağı','köşk','köşkü','kasır','kasrı',
+      'sinagog','surlar','suru','kemer','meydanı','çarşı','çarşısı','arasta','saat kulesi','manastır','manastırı','mozaik','şapel','tuz'],
+  en:['mosque','castle','fortress','museum','bridge','tomb','mausoleum','cave','church','cathedral','palace','fountain','madrasa',
+      'tower','monument','bath','hammam','caravanserai','waterfall','canyon','lake','national park','ancient','theatre','theater',
+      'ruins','mansion','synagogue','square','bazaar','market','monastery','basilica','gate','walls','lighthouse']
+};
+const SKIP = ['mahallesi','köyü','ilçesi','ili','lisesi','okulu','üniversitesi','fakültesi','istasyonu','durağı','hastanesi','stadyumu',
+              'spor','kulübü','belediyesi','seçim','neighbourhood','district','school','university','station','hospital','stadium','club'];
+
+function isSight(title){
+  const t = title.toLocaleLowerCase(lang==='tr'?'tr':'en');
+  if(SKIP.some(w=>t.endsWith(' '+w)||t.includes(' '+w+' '))) return false;
+  return KEYS[lang].some(w=>t.includes(w)) || KEYS[lang==='tr'?'en':'tr'].some(w=>t.includes(w));
+}
+
+async function wiki(params){
+  const u = `https://${lang}.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&` + new URLSearchParams(params);
+  const r = await fetch(u); if(!r.ok) throw new Error(r.status); return r.json();
+}
+
+async function placeLabel(lat, lng){
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=${lat}&lon=${lng}&accept-language=${lang}`);
+    const j = await r.json(), a = j.address||{};
+    return a.town || a.city_district || a.city || a.county || a.province || a.state || '';
+  }catch(e){ return ''; }
+}
+
+function orderRoute(list, start){
+  const rest=[...list], out=[]; let cur=start;
+  while(rest.length){ rest.sort((a,b)=>dist(cur,a)-dist(cur,b)); cur=rest.shift(); out.push(cur); }
+  return out;
+}
+function routeLength(){
+  if(!stops.length) return 0; let m=0, cur=(center||pos||stops[0]);
+  for(const x of stops){ m+=dist(cur,x); cur=x; } return m;
+}
+function mapsLink(){
+  if(!stops.length) return '#';
+  const ll = x => `${x.lat.toFixed(6)},${x.lng.toFixed(6)}`;
+  const start = pos || center, last = stops[stops.length-1], mids = stops.slice(0,-1).slice(0,8);
+  const walk = routeLength() < 6000;
+  return 'https://www.google.com/maps/dir/?api=1' + (start?`&origin=${ll(start)}`:'') + `&destination=${ll(last)}`
+       + (mids.length?`&waypoints=${encodeURIComponent(mids.map(ll).join('|'))}`:'') + `&travelmode=${walk?'walking':'driving'}`;
+}
+
+async function loadNear(lat, lng, label){
+  if(dist({lat,lng}, GALATA[0]) < 1500){ stops=GALATA; mode='galata'; placeName='Galata'; selected=GALATA[0].id; return render(); }
+  loadingNear=true; netErr=false; render();
+  try{
+    const g = await wiki({action:'query', list:'geosearch', gscoord:`${lat}|${lng}`, gsradius:10000, gslimit:200});
+    let c = (g.query?.geosearch||[]).filter(x=>isSight(x.title));
+    let near = c.filter(x=>x.dist<=3000);
+    if(near.length < 4) near = c;
+    near = near.slice(0, 8);
+    if(!near.length){ stops=GALATA; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; loadingNear=false; netErr=false; toast(UI[lang].none); return render(); }
+    const d = await wiki({action:'query', pageids:near.map(x=>x.pageid).join('|'), prop:'extracts|description|pageimages',
+                         exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail', pithumbsize:600});
+    const pages = d.query?.pages||[];
+    const list = near.map(x=>{
+      const pg = pages.find(p=>p.pageid===x.pageid)||{};
+      let metin = (pg.extract||'').replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+      const w = metin.split(' '); if(w.length>140) metin = w.slice(0,140).join(' ').replace(/[,;:]?$/,'') + '…';
+      const t = {ad:x.title, kisa:pg.description || '', metin: metin || x.title};
+      return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:pg.thumbnail?.source||'', wiki:true, title:x.title, tr:t, en:t};
+    });
+    center = {lat, lng};
+    stops = orderRoute(list, pos || center); mode='near'; selected=stops[0].id; manual=false; storyOpen=false;
+    placeName = label || await placeLabel(lat, lng) || (lang==='tr'?'Yakınındakiler':'Nearby');
+  }catch(e){ netErr=true; }
+  loadingNear=false; render();
+}
+
+/* Vikipedi özetini Gemini ile rehber diline çevir (anahtar varsa, bir kere, telefonda saklanır) */
+const guideBusy = new Set();
+function ensureGuide(s){
+  const t = s[lang]; if(!t || t.rehber || guideBusy.has(s.id) || !getKey()) return;
+  const ck = 'gep-g-'+lang+'-'+s.id;
+  try{ const c = localStorage.getItem(ck); if(c){ t.metin=c; t.rehber=true; return; } }catch(e){}
+  guideBusy.add(s.id);
+  const dil = lang==='tr'?'Türkçe':'English';
+  const prompt = `Aşağıdaki ansiklopedi bilgisini, yerinde duran bir gezgine anlatan samimi bir tur rehberi gibi ${dil} olarak yeniden yaz. 90-120 kelime. SADECE verilen bilgileri kullan, yeni tarih, sayı ya da olay uydurma. Başlık, liste, emoji yok; düz metin döndür.\n\nYer: ${s.title}\nBilgi: ${t.metin}`;
+  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(getKey())}`,
+    {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:.5}})})
+    .then(r=>r.ok?r.json():Promise.reject(r.status))
+    .then(j=>{ const txt=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
+      if(txt.length>80){ t.metin=txt; t.rehber=true; try{localStorage.setItem(ck,txt)}catch(e){} if(!speaking) render(); } })
+    .catch(()=>{}).finally(()=>guideBusy.delete(s.id));
+}
+
+async function searchPlace(q){
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=${lang}&q=${encodeURIComponent(q)}`);
+    const j = await r.json(); if(!j.length) return toast(UI[lang].notFound);
+    const name = (j[0].display_name||q).split(',')[0];
+    stopSpeak(); loadNear(+j[0].lat, +j[0].lon, name);
+  }catch(e){ toast(UI[lang].netErr); }
+}
+$('search').onsubmit = e => { e.preventDefault(); const q=$('q').value.trim(); if(q){ $('q').blur(); searchPlace(q); } };
+$('sample').onclick = () => { stopSpeak();
+  if(mode==='galata' && pos){ center=null; loadNear(pos.lat,pos.lng); }
+  else { stops=GALATA; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; manual=true; storyOpen=false; render(); window.scrollTo({top:0,behavior:'smooth'}); } };
+
 $('locate').onclick = locate;
-document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{ stopSpeak(); lang=b.dataset.l; try{localStorage.setItem('gep-lang',lang)}catch(e){} render(); });
+document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{ stopSpeak(); lang=b.dataset.l; try{localStorage.setItem('gep-lang',lang)}catch(e){}
+  if(mode==='near' && center){ loadNear(center.lat, center.lng); } else render(); });
 document.querySelectorAll('[data-soon]').forEach(b=>b.onclick=()=>toast(UI[lang].soon));
 if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = ()=>{};
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
