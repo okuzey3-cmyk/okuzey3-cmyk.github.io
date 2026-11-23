@@ -37,8 +37,9 @@ const Shop = (() => {
     const off = await openFoodFacts(String(r.barkod||'').replace(/\D/g,''));
     const p = {...r, off: off ? {nutri:off.nutriscore_grade||'', nova:off.nova_group||'', name:off.product_name||''} : null,
                img: thumb, lang, metin: [r.ozet, r.icerik_notu].filter(Boolean).join(' ')};
-    p.ts = Date.now(); Journal.addProduct(p); current = p;
-    return p;
+    p.ts = Date.now(); Journal.addProduct(p);
+    current = {...p, _shot:'data:image/jpeg;base64,'+b64};
+    return current;
   }
 
   function productHTML(p, withPlay){
@@ -51,7 +52,7 @@ const Shop = (() => {
     const list = (arr, cls, sign) => (arr||[]).filter(Boolean).map(x=>`<i class="${cls}">${sign}</i><span>${esc(x)}</span>`).join('');
     return `<div class="tag">${esc(p.emin===false ? u.unsure : (p.kategori || u.shopEyebrow))}</div>
       <h2>${esc(p.urun)}</h2>${p.marka?`<div class="brand">${esc(p.marka)}</div>`:''}
-      ${withPlay ? playButton('shop-'+(p.ts||'now'), p.metin) : ''}
+      ${withPlay ? playButton('shop-'+(p.ts||'now'), p.metin, Share.button('product')) : ''}
       <p class="sum">${esc(p.ozet||'')}</p>
       ${(p.artilar?.length||p.eksiler?.length) ? `<div class="pros">${list(p.artilar,'p','+')}${list(p.eksiler,'m','−')}</div>` : ''}
       ${chips.length?`<div class="chips">${chips.join('')}</div>`:''}
@@ -63,8 +64,17 @@ const Shop = (() => {
   function scan(){
     Cam.open('shop', {
       onShot: (b64, thumb) => analyse(b64, thumb),
-      onResult: p => `<div class="product">${productHTML(p, !p.hata)}</div>`
+      onResult: p => `<div class="product">${productHTML(p, !p.hata)}</div>`,
+      onShare: p => share(p)
     });
+  }
+
+  function share(p){
+    p = p || current; if(!p || p.hata) return;
+    const u = T();
+    Share.go({text:u.shProduct(p.urun), fileName:'gepgep-urun.png',
+      cardOpts:{eyebrow:u.cardProduct + (p.kategori?' · '+p.kategori:''), title:p.urun,
+                line:p.ozet||'', img:p._shot||p.img, badge:p.off?.nutri ? (lang==='tr'?'Besin notu ':'Nutri-Score ')+p.off.nutri.toUpperCase() : ''}});
   }
 
   function render(){
@@ -89,6 +99,7 @@ const Shop = (() => {
   return {
     init(){ $('shopScan').onclick = scan; },
     render,
+    share(){ share(current); },
     play(id){ const p = current; if(p) Voice.toggle(id, p.metin || p.ozet); },
     enter(){ if(!current){ const h = Journal.products(); current = h[0] || null; } },
     set current(p){ current = p; }

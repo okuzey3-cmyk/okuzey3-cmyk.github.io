@@ -1,9 +1,9 @@
 /* Gep Gep — çevrimdışı önbellek
    Uygulama dosyaları: önce ağ, yoksa önbellek.
    Vikipedi fotoğrafları ve harita karoları: önce önbellek (internetsiz rotalar için). */
-const C = 'gepgep-v4';
+const C = 'gepgep-v5';
 const CORE = ['./', 'index.html', 'manifest.json', 'icon.svg', 'icon-180.png', 'css/app.css',
-  'js/galata.js', 'js/core.js', 'js/kamera.js', 'js/gezi.js', 'js/gokyuzu.js', 'js/alisveris.js', 'js/gunluk.js',
+  'js/galata.js', 'js/core.js', 'js/paylas.js', 'js/kamera.js', 'js/gezi.js', 'js/gokyuzu.js', 'js/alisveris.js', 'js/gunluk.js',
   'vendor/leaflet.js', 'vendor/leaflet.css', 'vendor/astronomy.browser.min.js'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(CORE))); self.skipWaiting(); });

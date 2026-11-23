@@ -9,9 +9,9 @@ const Cam = {
   onShot: null,        // (base64) => Promise
   onResult: null,      // sonucu alttaki kartta çizer
 
-  open(mode, {onShot, onResult}){
-    if(!getKey()) return this.keySheet(()=>this.open(mode, {onShot, onResult}));
-    this.mode = mode; this.onShot = onShot; this.onResult = onResult;
+  open(mode, {onShot, onResult, onShare}){
+    if(!getKey()) return this.keySheet(()=>this.open(mode, {onShot, onResult, onShare}));
+    this.mode = mode; this.onShot = onShot; this.onResult = onResult; this.onShare = onShare;
     const u = T();
     $('cam').className = 'cam open' + (mode==='shop' ? ' label' : '');
     $('sheet').className = 'sheet';
@@ -75,9 +75,11 @@ const Cam = {
   init(){
     $('camClose').onclick = () => this.close();
     $('shutter').onclick = () => this.shoot();
-    $('camKey').onclick = () => this.keySheet(this.mode ? () => this.open(this.mode, {onShot:this.onShot, onResult:this.onResult}) : null);
+    $('camKey').onclick = () => this.keySheet(this.mode ? () => this.open(this.mode, {onShot:this.onShot, onResult:this.onResult, onShare:this.onShare}) : null);
     /* Alttaki kartta oynat düğmesi */
     $('sheet').addEventListener('click', e=>{
+      const sh = e.target.closest('[data-share]');
+      if(sh && this.last){ e.stopPropagation(); this.onShare && this.onShare(this.last); return; }
       const b = e.target.closest('[data-play]'); if(!b || !this.last) return;
       e.stopPropagation();
       const text = this.last.metin || this.last.ozet || '';

@@ -91,7 +91,13 @@ const UI = {
     setTitle:"Ayarlar", setKey:"Gemini anahtarı", setKeyOn:"Kayıtlı", setKeyOff:"Girilmedi", change:"Değiştir", add:"Ekle",
     setRate:"Anlatım hızı", setRateSub:"Sesli okuma hızı", setClear:"Tüm verileri sil", setClearSub:"Günlük, rotalar ve anahtar silinir", delBtn:"Sil",
     clearConfirm:"Günlük, kayıtlı rotalar ve anahtar bu telefondan silinsin mi?", cleared:"Veriler silindi", open:"Aç",
-    soon:"Bu bölüm yakında geliyor"
+    soon:"Bu bölüm yakında geliyor",
+    share:"Paylaş", sharePrep:"Paylaşım kartı hazırlanıyor…", shareCopied:"Link kopyalandı; görsel indirildi",
+    shareDoneBtn:"Başarını paylaş", doneBadge:(a,b)=>`✓ ${a}/${b} durak`,
+    shStop:(ad,place)=>`${place ? place+' gezimde' : 'Gezimde'} dinledim: ${ad}`,
+    shRoute:(place,n)=>`${place} rotamı tamamladım: ${n}/${n} durak!`,
+    shSky:ad=>`Bu gece gökyüzünde buldum: ${ad}`, shProduct:ad=>`Etiketini okuttum: ${ad}`, shSeen:ad=>`Kameramla tanıdım: ${ad}`,
+    cardStop:"Gezi", cardRoute:"Rota tamamlandı", cardSky:"Bu gece gökyüzünde", cardProduct:"Etiketi okudum", cardSeen:"Kameranın gördüğü"
   },
   en:{
     tabGezi:"Walk", tabSky:"Sky", tabShop:"Shopping", tabLog:"Journal",
@@ -151,7 +157,13 @@ const UI = {
     setTitle:"Settings", setKey:"Gemini key", setKeyOn:"Saved", setKeyOff:"Not set", change:"Change", add:"Add",
     setRate:"Narration speed", setRateSub:"Speed of the spoken story", setClear:"Delete all data", setClearSub:"Journal, routes and key are removed", delBtn:"Delete",
     clearConfirm:"Delete the journal, saved routes and key from this phone?", cleared:"Data deleted", open:"Open",
-    soon:"This section is coming soon"
+    soon:"This section is coming soon",
+    share:"Share", sharePrep:"Preparing your share card…", shareCopied:"Link copied; image downloaded",
+    shareDoneBtn:"Share your achievement", doneBadge:(a,b)=>`✓ ${a}/${b} stops`,
+    shStop:(ad,place)=>`Listened to the story of ${ad}${place?' in '+place:''} with Gep Gep`,
+    shRoute:(place,n)=>`Finished my ${place} route: ${n}/${n} stops!`,
+    shSky:ad=>`Found ${ad} in tonight's sky`, shProduct:ad=>`Scanned the label: ${ad}`, shSeen:ad=>`My camera recognised: ${ad}`,
+    cardStop:"Walk", cardRoute:"Route complete", cardSky:"Tonight's sky", cardProduct:"Label read", cardSeen:"What the camera saw"
   }
 };
 const T = () => UI[lang];
@@ -176,6 +188,7 @@ const ICON = {
   nav:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>',
   compass:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>',
   tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12.5V19a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6.5"/></svg>',
   x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
 };
 
@@ -204,10 +217,10 @@ const Voice = {
 };
 if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = ()=>{};
 
-function playButton(id, text){
+function playButton(id, text, extra=''){
   const on = Voice.is(id), u = T();
   return `<div class="row"><button class="play" data-play="${esc(id)}">${on?ICON.pause:ICON.play}</button>
-    <div class="lbl"><b>${esc(on?u.stop:u.listen)}</b><span>${minutes(text)} ${esc(u.minutes)}</span></div></div>`;
+    <div class="lbl"><b>${esc(on?u.stop:u.listen)}</b><span>${minutes(text)} ${esc(u.minutes)}</span></div>${extra}</div>`;
 }
 
 /* ---------- Gemini ---------- */
@@ -280,6 +293,8 @@ const App = {
     });
     /* Oynat düğmeleri her yerde aynı şekilde çalışır */
     document.addEventListener('click', e=>{
+      const sh = e.target.closest('[data-share]');
+      if(sh && !sh.closest('#sheet')){ const m = this.modules[this.tab]; m && m.share && m.share(sh.dataset.share); return; }
       const b = e.target.closest('[data-play]'); if(!b) return;
       const m = this.modules[this.tab]; m && m.play && m.play(b.dataset.play);
     });

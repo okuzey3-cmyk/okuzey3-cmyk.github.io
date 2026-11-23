@@ -238,7 +238,7 @@ const Sky = (() => {
     const kind = u.types[o.type] + (t.kisa ? ' · ' + t.kisa : '');
     return `<div class="tag">${esc(kind)}</div><h2>${esc(t.ad)}</h2>
       <div class="meta">${esc(where)}${o.type!=='sun'?' · '+esc(u.mag(o.mag.toFixed(1).replace('.', lang==='tr'?',':'.'))):''}</div>
-      ${playButton('sky-'+o.id, t.metin)}
+      ${playButton('sky-'+o.id, t.metin, Share.button('sky'))}
       <div class="story open">${esc(t.metin)}</div>`;
   }
   function renderCard(){
@@ -315,6 +315,14 @@ const Sky = (() => {
     },
     leave(){ cancelAnimationFrame(raf); raf = null; clearInterval(timer); stopCompass(); compass = false; sm = {az:null, alt:null}; },
     render, setLocation,
+    share(){
+      const o = target || picked; if(!o) return;
+      const u = T(), t = o[lang] || o.tr;
+      const where = o.alt > 0 ? `${dirName(o.az)} · ${Math.round(o.alt)}° ${u.up}` : u.below;
+      Share.go({text:u.shSky(t.ad), fileName:'gepgep-gokyuzu.png',
+        cardOpts:{theme:'night', glow:o.color, eyebrow:u.cardSky, title:t.ad,
+                  line:`${u.types[o.type]}${t.kisa?' · '+t.kisa:''} · ${where}`}});
+    },
     play(id){ const o = objs.find(x=>'sky-'+x.id===id); if(o) Voice.toggle(id, (o[lang]||o.tr).metin, ()=>renderCard()); setTimeout(renderCard, 0); },
     langChanged(){}
   };

@@ -236,6 +236,7 @@ Write in ${dil}. Return ONLY JSON: {"ad": "short name", "kisa": "one short line"
 If you cannot identify it confidently, set "emin": false, describe what you see and say honestly that you are not sure. Never invent dates or facts.`;
         const r = await AI.ask([{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}], {json:true});
         if(!r.ad || !r.metin) throw new Error('bad');
+        r._shot = 'data:image/jpeg;base64,' + b64;
         Journal.addSeen({ad:r.ad, kisa:r.kisa||'', metin:r.metin, emin:r.emin!==false, img:thumb, place:placeName});
         return r;
       },
@@ -244,7 +245,12 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
         if(r.hata) return `<div class="tag">${esc(u.unsure)}</div><h2>${esc(u.unsure)}</h2><div class="story">${esc(u.aiErr)}</div>`;
         return `<div class="tag">${esc(r.emin===false?u.unsure:u.seen)}</div><h2>${esc(r.ad)}</h2>
           ${r.kisa?`<div class="meta" style="color:var(--ink3);font-size:14px">${esc(r.kisa)}</div>`:''}
-          ${playButton('cam', r.metin)}<div class="story">${esc(r.metin)}</div>`;
+          ${playButton('cam', r.metin, Share.button('cam'))}<div class="story">${esc(r.metin)}</div>`;
+      },
+      onShare: r => {
+        if(r.hata) return;
+        const u = T();
+        Share.go({text:u.shSeen(r.ad), cardOpts:{eyebrow:u.cardSeen + (placeName&&mode!=='galata'?' · '+placeName:''), title:r.ad, line:r.kisa||'', img:r._shot}});
       }
     });
   }
@@ -277,7 +283,8 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     const doneN = stops.filter(s=>v.has(s.id)).length;
     $('progress').className = 'progress' + (doneN ? ' on' : '');
     $('progress').innerHTML = `<div class="bar"><i style="width:${Math.round(doneN/stops.length*100)}%"></i></div>
-      <div class="txt"><span>${esc(u.progress(doneN, stops.length))}</span>${doneN===stops.length?`<b>${esc(u.progressDone)}</b>`:''}</div>`;
+      <div class="txt"><span>${esc(u.progress(doneN, stops.length))}</span>${doneN===stops.length?`<b>${esc(u.progressDone)}</b>`:''}</div>
+      ${doneN===stops.length?`<button class="donebtn" data-share="route">${ICON.share}${esc(u.shareDoneBtn)}</button>`:''}`;
 
     /* durak kartı */
     const s = all().find(x=>x.id===selected) || stops[0], t = txt(s);
@@ -300,6 +307,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       <div class="row">
         <button class="play" data-play="${esc(s.id)}">${Voice.is(s.id)?ICON.pause:ICON.play}</button>
         <div class="lbl"><b>${esc(Voice.is(s.id)?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(u.minutes)}</span></div>
+        ${Share.button('stop')}
         <button class="check ${isDone?'on':''}" id="check" aria-label="${esc(isDone?u.unmark:u.markVisited)}" title="${esc(isDone?u.unmark:u.markVisited)}">${ICON.check}</button>
       </div>
       <div class="story ${storyOpen?'open':''}">${esc(t.metin)}${s.wiki?`<div class="src">${esc(t.rehber?u.srcAi:u.src)}</div>`:''}</div>
@@ -363,6 +371,22 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('resetRoute').onclick = () => { setVisited(new Set()); manual=false; selected=autoPick(); toast(T().resetToast); App.refresh(); };
   }
 
+  function firstSentence(t){ const m = String(t||'').match(/^(.{20,160}?[.!?])\s/); return m ? m[1] : String(t||'').slice(0,140); }
+  function share(id){
+    const u = T();
+    if(id==='route'){
+      const cover = stops.find(x=>x.img)?.img || '';
+      Share.go({text:u.shRoute(placeName, stops.length), fileName:'gepgep-rota.png',
+        cardOpts:{eyebrow:u.cardRoute, title:placeName, badge:u.doneBadge(stops.length, stops.length),
+                  line:stops.map(x=>txt(x).ad).join(' · '), img:cover}});
+      return;
+    }
+    const s = all().find(x=>x.id===selected) || stops[0], t = txt(s);
+    Share.go({text:u.shStop(t.ad, mode==='galata' ? 'Galata' : placeName),
+      cardOpts:{eyebrow:`${u.cardStop} · ${mode==='galata'?'Galata':placeName}`, title:t.ad, line:t.kisa || firstSentence(t.metin), img:s.img,
+                badge: visited().has(s.id) ? '✓ '+u.visitedTag : ''}});
+  }
+
   function play(id){
     const s = all().find(x=>x.id===id); if(!s) return;
     Voice.toggle(id, txt(s).metin);
@@ -372,7 +396,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     if(mode==='near' && center) loadNear(center.lat, center.lng);
   }
 
-  return { init, render, play, langChanged, openSaved, enter(){ setTimeout(()=>map && map.invalidateSize(), 50); },
+  return { init, render, play, share, langChanged, openSaved, enter(){ setTimeout(()=>map && map.invalidateSize(), 50); },
            get pos(){ return pos; }, toggleVisited };
 })();
 App.register('gezi', Gezi);
