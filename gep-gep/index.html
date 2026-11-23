@@ -89,9 +89,55 @@
   nav button.on{color:var(--accent)}
   nav button.soon{opacity:.45}
   nav button small{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-  .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  .toast{z-index:60;position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
          background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .cam-btn{width:100%;margin-top:14px;padding:16px;border-radius:18px;background:var(--ink);color:var(--bg);
+           font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .15s}
+  .cam-btn:active{transform:scale(.98)}
+  .cam-btn svg{width:22px;height:22px}
+  .cam{position:fixed;inset:0;background:#000;z-index:50;display:none;flex-direction:column}
+  .cam.open{display:flex}
+  .cam video,.cam img.shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .cam img.shot{display:none}
+  .cam.frozen img.shot{display:block}
+  .cam .top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;
+            padding:calc(14px + env(safe-area-inset-top)) 18px 0;color:#fff}
+  .cam .x{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+          display:grid;place-items:center;color:#fff}
+  .cam .hint{font-size:14px;font-weight:500;background:rgba(0,0,0,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+             padding:8px 14px;border-radius:99px}
+  .cam .frame{position:absolute;inset:22% 12% 30%;border-radius:28px;z-index:1;pointer-events:none;
+              box-shadow:0 0 0 2px rgba(255,255,255,.65), 0 0 0 9999px rgba(0,0,0,.18)}
+  .cam.frozen .frame{display:none}
+  .cam .bottom{margin-top:auto;position:relative;z-index:2;display:flex;justify-content:center;padding:0 0 calc(34px + env(safe-area-inset-bottom))}
+  .shutter{width:78px;height:78px;border-radius:50%;border:4px solid #fff;display:grid;place-items:center}
+  .shutter::after{content:"";width:62px;height:62px;border-radius:50%;background:#fff;transition:transform .12s}
+  .shutter:active::after{transform:scale(.88)}
+  .cam.frozen .shutter{display:none}
+  .scan{position:absolute;inset:0;z-index:1;display:none;align-items:center;justify-content:center;color:#fff;font-weight:600;
+        background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55))}
+  .cam.busy .scan{display:flex}
+  .scan span{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.5);padding:12px 18px;border-radius:99px;
+             backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .scan i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--paper);color:var(--ink);border-radius:26px 26px 0 0;
+         padding:12px 22px calc(24px + env(safe-area-inset-bottom));max-height:72vh;overflow:auto;
+         transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+  .sheet.up{transform:none}
+  .sheet .grab{width:38px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+  .sheet .tag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+  .sheet h2{font-family:var(--serif);font-size:27px;font-weight:600;letter-spacing:-.015em;line-height:1.15;margin:8px 0 2px}
+  .sheet .row{display:flex;align-items:center;gap:14px;margin:16px 0 4px}
+  .sheet .story{display:block;margin-top:14px}
+  .sheet .again{margin-top:18px;width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-weight:600;font-size:15px}
+  .sheet input{width:100%;margin-top:14px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);
+               color:var(--ink);font:15px var(--sans)}
+  .sheet .save{margin-top:12px;width:100%;padding:15px;border-radius:14px;background:var(--accent);color:#fff;font-weight:600;font-size:15px}
+  .sheet p.small{font-size:14px;color:var(--ink2);margin-top:8px;line-height:1.5}
+  .sheet a{color:var(--accent);font-weight:600}
 </style>
 </head>
 <body>
@@ -108,6 +154,7 @@
   </div>
 
   <div class="card now" id="now"></div>
+  <button class="cam-btn" id="camBtn"></button>
   <button class="locate" id="locate"></button>
   <p class="note" id="note"></p>
 
@@ -123,6 +170,20 @@
   <button class="soon" data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg><span id="tabShop"></span></button>
 </div></nav>
 <div class="toast" id="toast"></div>
+
+<div class="cam" id="cam">
+  <video id="video" playsinline muted autoplay></video>
+  <img class="shot" id="shot" alt="">
+  <div class="frame"></div>
+  <div class="scan"><span><i></i><b id="scanTxt"></b></span></div>
+  <div class="top">
+    <button class="x" id="camClose" aria-label="Kapat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <span class="hint" id="camHint"></span>
+    <button class="x" id="camKey" aria-label="Anahtar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3"/></svg></button>
+  </div>
+  <div class="bottom"><button class="shutter" id="shutter" aria-label="Çek"></button></div>
+  <div class="sheet" id="sheet"></div>
+</div>
 
 <script>
 const STOPS = [
@@ -159,13 +220,23 @@ const UI = {
        read:"Yazısını oku", hide:"Yazıyı gizle", locate:"Konumumu bul", locating:"Konum aranıyor…",
        located:"Konum açık · en yakın durak seçiliyor", far:"Galata'dan uzaktasın; durakları yine de dinleyebilirsin.",
        denied:"Konum izni verilmedi; durağı listeden seçebilirsin.", route:"Rota", stops:"5 durak",
-       tabGezi:"Gezi", tabSky:"Gökyüzü", tabShop:"Alışveriş", soon:"Bu bölüm yakında geliyor", away:"uzakta" },
+       tabGezi:"Gezi", tabSky:"Gökyüzü", tabShop:"Alışveriş", soon:"Bu bölüm yakında geliyor", away:"uzakta",
+       cam:"Kameraya tut", camHint:"Bir yapıya ya da tabelaya tut", scanning:"İnceleniyor…", seen:"Kameranın gördüğü",
+       again:"Tekrar çek", unsure:"Emin olamadım", camErr:"Kamera açılamadı. Ayarlar'dan Safari'ye kamera izni ver.",
+       aiErr:"Cevap alınamadı. İnternetini ya da anahtarını kontrol et.",
+       keyTitle:"Kamera için tek seferlik ayar", keyText:"Kamera, gördüğünü Google'ın Gemini yapay zekasına sorarak tanıyor. Bunun için ücretsiz bir Gemini anahtarı gerekiyor. Anahtar sadece bu telefonda saklanır.",
+       keyLink:"Anahtarı buradan al", keyPh:"Gemini anahtarını yapıştır", save:"Kaydet ve devam et", keySaved:"Anahtar kaydedildi" },
   en:{ eyebrow:"Walk · Istanbul", intro:"Five stops, about an hour's walk. Reach a stop, press play.",
        nearest:"Nearest stop", here:"You are here", first:"First stop", listen:"Listen", stop:"Stop", minutes:"min listen",
        read:"Read the text", hide:"Hide the text", locate:"Find my location", locating:"Finding you…",
        located:"Location on · picking the nearest stop", far:"You're far from Galata, but you can still listen to every stop.",
        denied:"Location wasn't allowed; pick a stop from the list.", route:"Route", stops:"5 stops",
-       tabGezi:"Walk", tabSky:"Sky", tabShop:"Shopping", soon:"This section is coming soon", away:"away" }
+       tabGezi:"Walk", tabSky:"Sky", tabShop:"Shopping", soon:"This section is coming soon", away:"away",
+       cam:"Point the camera", camHint:"Point at a building or a sign", scanning:"Looking…", seen:"What the camera sees",
+       again:"Take another", unsure:"Not sure", camErr:"Couldn't open the camera. Allow camera access for Safari in Settings.",
+       aiErr:"No answer came back. Check your connection or your key.",
+       keyTitle:"One-time setup for the camera", keyText:"The camera recognises things by asking Google's Gemini AI. That needs a free Gemini key, which is stored only on this phone.",
+       keyLink:"Get a key here", keyPh:"Paste your Gemini key", save:"Save and continue", keySaved:"Key saved" }
 };
 
 let lang = 'tr';
@@ -188,6 +259,7 @@ function render(){
   $('eyebrow').textContent=u.eyebrow; $('intro').textContent=u.intro;
   $('routeTitle').textContent=u.route; $('routeMeta').textContent=u.stops;
   $('tabGezi').textContent=u.tabGezi;
+  $('camBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.4"/></svg>${esc(u.cam)}`;
   $('tabSky').innerHTML=esc(u.tabSky); $('tabShop').innerHTML=esc(u.tabShop);
 
   const s = STOPS.find(x=>x.id===selected), t = s[lang];
@@ -252,6 +324,98 @@ function locate(){
 }
 
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800); }
+
+
+/* ---------- Kamera ---------- */
+let stream = null, camResult = null;
+const getKey = () => { try{ return localStorage.getItem('gep-key')||'' }catch(e){ return '' } };
+
+function openCam(){
+  if(!getKey()) return showKeySheet(true);
+  $('cam').className='cam open'; $('sheet').className='sheet'; camResult=null;
+  $('camHint').textContent=UI[lang].camHint; $('scanTxt').textContent=UI[lang].scanning;
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}}, audio:false})
+    .then(st=>{ stream=st; $('video').srcObject=st; })
+    .catch(()=>{ closeCam(); toast(UI[lang].camErr); });
+}
+function closeCam(){ stopSpeak(); if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } $('cam').className='cam'; render(); }
+
+function shoot(){
+  const v=$('video'); if(!v.videoWidth) return;
+  const W=1024, H=Math.round(v.videoHeight*W/v.videoWidth), c=document.createElement('canvas');
+  c.width=W; c.height=H; c.getContext('2d').drawImage(v,0,0,W,H);
+  const url=c.toDataURL('image/jpeg',0.82); $('shot').src=url;
+  $('cam').className='cam open frozen busy';
+  ask(url.split(',')[1]).then(r=>{ camResult=r; showResult(); })
+    .catch(()=>{ camResult={ad:UI[lang].unsure, metin:UI[lang].aiErr, hata:true}; showResult(); });
+}
+
+async function ask(b64){
+  const near = pos ? `The user is at latitude ${pos.lat.toFixed(5)}, longitude ${pos.lng.toFixed(5)} (Istanbul).` : 'The user is probably in Istanbul.';
+  const dil = lang==='tr' ? 'Türkçe' : 'English';
+  const prompt = `${near} Look at the photo and identify the main thing in it: a landmark, building, street, monument, sign or object.
+Write in ${dil}. Return ONLY JSON: {"ad": "short name", "kisa": "one short line", "metin": "about 90-120 words told like a friendly tour guide: what it is and its history or the most interesting facts", "emin": true/false}.
+If you cannot identify it confidently, set "emin": false, describe what you see and say honestly that you are not sure. Never invent dates or facts.`;
+  const body = {contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
+                generationConfig:{temperature:0.4, responseMimeType:'application/json'}};
+  let last;
+  for(const m of ['gemini-flash-latest','gemini-flash-lite-latest']){
+    try{
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(getKey())}`,
+        {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      if(!r.ok){ last=new Error(r.status); continue; }
+      const j = await r.json();
+      const txt = (j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
+      const o = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}')+1));
+      if(o.ad && o.metin) return o;
+    }catch(e){ last=e; }
+  }
+  throw last||new Error('no answer');
+}
+
+function showResult(){
+  const u=UI[lang], r=camResult;
+  $('cam').className='cam open frozen';
+  $('sheet').innerHTML=`<div class="grab"></div>
+    <div class="tag">${esc(r.emin===false&&!r.hata?u.unsure:u.seen)}</div>
+    <h2>${esc(r.ad)}</h2>${r.kisa?`<div class="meta" style="color:var(--ink3);font-size:14px">${esc(r.kisa)}</div>`:''}
+    ${r.hata?'':`<div class="row"><button class="play" id="camPlay">${speaking
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'}</button>
+      <div class="lbl"><b>${esc(speaking?u.stop:u.listen)}</b><span>${minutes(r.metin)} ${esc(u.minutes)}</span></div></div>`}
+    <div class="story">${esc(r.metin)}</div>
+    <button class="again" id="again">${esc(u.again)}</button>`;
+  requestAnimationFrame(()=>$('sheet').classList.add('up'));
+  if($('camPlay')) $('camPlay').onclick=()=>{ if(speaking){ stopSpeak(); showResult(); } else { speakThen(r.metin, showResult); showResult(); } };
+  $('again').onclick=()=>{ stopSpeak(); $('sheet').className='sheet'; $('cam').className='cam open'; };
+}
+function speakThen(text, cb){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel(); const ut=new SpeechSynthesisUtterance(text);
+  ut.lang=lang==='tr'?'tr-TR':'en-US'; const v=pickVoice(); if(v) ut.voice=v; ut.rate=.96;
+  ut.onend=ut.onerror=()=>{ speaking=false; cb(); }; speaking=true; speechSynthesis.speak(ut);
+}
+
+function showKeySheet(thenCam){
+  const u=UI[lang];
+  $('cam').className='cam open frozen';
+  $('shot').removeAttribute('src');
+  $('sheet').innerHTML=`<div class="grab"></div>
+    <div class="tag">${esc(u.keyTitle)}</div>
+    <p class="small">${esc(u.keyText)}</p>
+    <p class="small"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">${esc(u.keyLink)} ↗</a></p>
+    <input id="keyIn" type="password" autocomplete="off" placeholder="${esc(u.keyPh)}" value="${esc(getKey())}">
+    <button class="save" id="keySave">${esc(u.save)}</button>`;
+  requestAnimationFrame(()=>$('sheet').classList.add('up'));
+  $('keySave').onclick=()=>{ const k=$('keyIn').value.trim(); if(!k) return;
+    try{ localStorage.setItem('gep-key',k) }catch(e){}
+    toast(u.keySaved); $('cam').className='cam'; if(thenCam) setTimeout(openCam,250); };
+}
+
+$('camBtn').onclick = openCam;
+$('camClose').onclick = closeCam;
+$('shutter').onclick = shoot;
+$('camKey').onclick = () => { if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } showKeySheet(true); };
 
 $('locate').onclick = locate;
 document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{ stopSpeak(); lang=b.dataset.l; try{localStorage.setItem('gep-lang',lang)}catch(e){} render(); });
