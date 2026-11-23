@@ -3,157 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4efe6">
+<meta name="theme-color" content="#f4efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14120f" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Gep Gep">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
 <title>Gep Gep</title>
-<style>
-  :root{
-    --bg:#f4efe6; --paper:#fffcf7; --ink:#1c1916; --ink2:#5d564d; --ink3:#9a9185; --line:#e7dfd2;
-    --accent:#c4552d; --accent-soft:rgba(196,85,45,.10); --ok:#5f8a4a;
-    --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
-    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{ --bg:#14120f; --paper:#1e1b17; --ink:#f3eee6; --ink2:#c2b9ab; --ink3:#857c70; --line:#2e2a24; --accent-soft:rgba(196,85,45,.18); }
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html{-webkit-text-size-adjust:100%}
-  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55;
-       padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom))}
-  .wrap{max-width:560px;margin:0 auto;padding:0 20px}
-  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
-
-  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 6px}
-  .logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:19px;letter-spacing:-.03em}
-  .logo i{width:26px;height:26px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
-  .logo i::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--bg);box-shadow:0 0 0 3px var(--accent), 0 0 0 5px var(--bg)}
-  .lang{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:3px}
-  .lang button{padding:5px 12px;border-radius:99px;font-size:13px;font-weight:600;color:var(--ink3)}
-  .lang button.on{background:var(--ink);color:var(--bg)}
-
-  .hero{padding:26px 0 22px}
-  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
-  .hero h1{font-family:var(--serif);font-size:48px;font-weight:600;letter-spacing:-.025em;line-height:1.05;margin:8px 0 8px}
-  .hero p{color:var(--ink2);font-size:16px}
-
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:22px}
-  .now{padding:20px 20px 22px;position:relative;overflow:hidden}
-  .now .tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.06em;
-            text-transform:uppercase;color:var(--accent)}
-  .now .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
-  .now.here .tag{color:var(--ok)} .now.here .tag::before{background:var(--ok);animation:pulse 1.6s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(95,138,74,.5)}100%{box-shadow:0 0 0 9px rgba(95,138,74,0)}}
-  .now h2{font-family:var(--serif);font-size:28px;font-weight:600;letter-spacing:-.015em;line-height:1.15;margin:10px 0 4px}
-  .now .meta{font-size:14px;color:var(--ink3)}
-  .now .row{display:flex;align-items:center;gap:14px;margin-top:18px}
-  .play{width:58px;height:58px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none;
-        box-shadow:0 8px 20px -8px rgba(196,85,45,.7);transition:transform .15s}
-  .play:active{transform:scale(.94)}
-  .play svg{width:22px;height:22px}
-  .row .lbl b{display:block;font-size:16px}
-  .row .lbl span{font-size:13px;color:var(--ink3)}
-  .story{margin-top:18px;font-family:var(--serif);font-size:17.5px;line-height:1.6;color:var(--ink);display:none}
-  .story.open{display:block}
-  .toggle{margin-top:14px;font-size:14px;font-weight:600;color:var(--accent)}
-
-  .locate{width:100%;margin-top:14px;padding:15px;border-radius:16px;border:1px dashed var(--line);color:var(--ink2);
-          font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
-  .note{margin-top:12px;font-size:13.5px;color:var(--ink3);text-align:center}
-
-  section{margin-top:36px}
-  .sh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
-  .sh h3{font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:-.01em}
-  .sh span{font-size:13px;color:var(--ink3)}
-  .route{overflow:hidden}
-  .stop{display:flex;align-items:center;gap:14px;padding:15px 18px;border-bottom:1px solid var(--line);width:100%;text-align:left}
-  .stop:last-child{border-bottom:none}
-  .stop .n{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;
-           font-size:13px;font-weight:700;color:var(--ink2);flex:none}
-  .stop.sel .n{background:var(--accent);border-color:var(--accent);color:#fff}
-  .stop .t{flex:1;min-width:0}
-  .stop .t b{display:block;font-weight:600;font-size:15.5px}
-  .stop .t span{display:block;font-size:13px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .stop .d{font-size:13px;color:var(--ink3);flex:none}
-
-  nav{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
-      background:color-mix(in srgb, var(--bg) 82%, transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-      border-top:1px solid var(--line)}
-  nav .in{max-width:560px;margin:0 auto;display:flex;justify-content:space-around}
-  nav button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink3);padding:4px 14px}
-  nav button svg{width:24px;height:24px}
-  nav button.on{color:var(--accent)}
-  nav button.soon{opacity:.45}
-  nav button small{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-  .toast{z-index:60;position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
-         background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-  .cam-btn{width:100%;margin-top:14px;padding:16px;border-radius:18px;background:var(--ink);color:var(--bg);
-           font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .15s}
-  .cam-btn:active{transform:scale(.98)}
-  .cam-btn svg{width:22px;height:22px}
-  .cam{position:fixed;inset:0;background:#000;z-index:50;display:none;flex-direction:column}
-  .cam.open{display:flex}
-  .cam video,.cam img.shot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .cam img.shot{display:none}
-  .cam.frozen img.shot{display:block}
-  .cam .top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;
-            padding:calc(14px + env(safe-area-inset-top)) 18px 0;color:#fff}
-  .cam .x{width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-          display:grid;place-items:center;color:#fff}
-  .cam .hint{font-size:14px;font-weight:500;background:rgba(0,0,0,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-             padding:8px 14px;border-radius:99px}
-  .cam .frame{position:absolute;inset:22% 12% 30%;border-radius:28px;z-index:1;pointer-events:none;
-              box-shadow:0 0 0 2px rgba(255,255,255,.65), 0 0 0 9999px rgba(0,0,0,.18)}
-  .cam.frozen .frame{display:none}
-  .cam .bottom{margin-top:auto;position:relative;z-index:2;display:flex;justify-content:center;padding:0 0 calc(34px + env(safe-area-inset-bottom))}
-  .shutter{width:78px;height:78px;border-radius:50%;border:4px solid #fff;display:grid;place-items:center}
-  .shutter::after{content:"";width:62px;height:62px;border-radius:50%;background:#fff;transition:transform .12s}
-  .shutter:active::after{transform:scale(.88)}
-  .cam.frozen .shutter{display:none}
-  .scan{position:absolute;inset:0;z-index:1;display:none;align-items:center;justify-content:center;color:#fff;font-weight:600;
-        background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(0,0,0,.55))}
-  .cam.busy .scan{display:flex}
-  .scan span{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.5);padding:12px 18px;border-radius:99px;
-             backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-  .scan i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--paper);color:var(--ink);border-radius:26px 26px 0 0;
-         padding:12px 22px calc(24px + env(safe-area-inset-bottom));max-height:72vh;overflow:auto;
-         transform:translateY(105%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-  .sheet.up{transform:none}
-  .sheet .grab{width:38px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
-  .sheet .tag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-  .sheet h2{font-family:var(--serif);font-size:27px;font-weight:600;letter-spacing:-.015em;line-height:1.15;margin:8px 0 2px}
-  .sheet .row{display:flex;align-items:center;gap:14px;margin:16px 0 4px}
-  .sheet .story{display:block;margin-top:14px}
-  .sheet .again{margin-top:18px;width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-weight:600;font-size:15px}
-  .sheet input{width:100%;margin-top:14px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);
-               color:var(--ink);font:15px var(--sans)}
-  .sheet .save{margin-top:12px;width:100%;padding:15px;border-radius:14px;background:var(--accent);color:#fff;font-weight:600;font-size:15px}
-  .sheet p.small{font-size:14px;color:var(--ink2);margin-top:8px;line-height:1.5}
-  .sheet a{color:var(--accent);font-weight:600}
-
-  .search{display:flex;gap:8px;margin-top:14px}
-  .search input{flex:1;min-width:0;padding:13px 15px;border-radius:14px;border:1px solid var(--line);background:var(--paper);
-                color:var(--ink);font:15px var(--sans);-webkit-appearance:none}
-  .search button{padding:0 16px;border-radius:14px;background:var(--paper);border:1px solid var(--line);font-weight:600;font-size:15px}
-  .mapbtn{margin-top:12px;display:flex;align-items:center;justify-content:center;gap:9px;padding:15px;border-radius:16px;
-          background:var(--accent);color:#fff;font-weight:600;font-size:15.5px;text-decoration:none}
-  .mapbtn svg{width:20px;height:20px}
-  .sample{display:block;margin:14px auto 0;font-size:14px;font-weight:600;color:var(--ink3)}
-  .stop .ph{width:46px;height:46px;border-radius:12px;object-fit:cover;flex:none;background:var(--line)}
-  .now .pic{display:block;width:calc(100% + 40px);margin:-20px -20px 16px;height:170px;object-fit:cover;background:var(--line)}
-  .loading{padding:34px 20px;text-align:center;color:var(--ink3);font-size:15px}
-  .loading i{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);
-             animation:spin .8s linear infinite;vertical-align:-4px;margin-right:8px}
-  .src{font-size:12px;color:var(--ink3);margin-top:10px}
-</style>
 </head>
 <body>
 <div class="wrap">
@@ -162,33 +22,122 @@
     <div class="lang"><button data-l="tr" class="on">TR</button><button data-l="en">EN</button></div>
   </header>
 
-  <div class="hero">
-    <div class="eyebrow" id="eyebrow"></div>
-    <h1 id="place">Galata</h1>
-    <p id="intro"></p>
-  </div>
+  <!-- ============ GEZİ ============ -->
+  <section class="view on" id="v-gezi">
+    <div class="hero">
+      <div class="eyebrow" id="eyebrow"></div>
+      <h1 id="place">Galata</h1>
+      <p id="intro"></p>
+    </div>
 
-  <div class="card now" id="now"></div>
-  <button class="cam-btn" id="camBtn"></button>
-  <button class="locate" id="locate"></button>
-  <p class="note" id="note"></p>
-  <form class="search" id="search"><input id="q" type="search" enterkeyhint="search" autocomplete="off"><button id="qBtn" type="submit"></button></form>
+    <div class="progress" id="progress"></div>
+    <div class="card now" id="now"></div>
+    <button class="cam-btn" id="camBtn"></button>
+    <button class="locate" id="locate"></button>
+    <p class="note" id="note"></p>
+    <form class="search" id="search"><input id="q" type="search" enterkeyhint="search" autocomplete="off"><button id="qBtn" type="submit"></button></form>
 
-  <section>
-    <div class="sh"><h3 id="routeTitle"></h3><span id="routeMeta"></span></div>
-    <div class="card route" id="route"></div>
-    <a class="mapbtn" id="mapBtn" target="_blank" rel="noopener"></a>
+    <div class="block">
+      <div class="sh"><h3 id="mapTitle"></h3><button class="link" id="mapMe"></button></div>
+      <div class="card mapcard"><div id="map"></div></div>
+    </div>
+
+    <div class="block">
+      <div class="sh"><h3 id="routeTitle"></h3><span id="routeMeta"></span></div>
+      <div class="card route" id="route"></div>
+      <a class="mapbtn" id="mapBtn" target="_blank" rel="noopener"></a>
+      <div class="twin">
+        <button class="ghost" id="saveRoute"></button>
+        <button class="ghost" id="resetRoute"></button>
+      </div>
+    </div>
+
+    <div class="block" id="farBlock">
+      <div class="sh"><h3 id="farTitle"></h3><span id="farMeta"></span></div>
+      <div class="card route" id="far"></div>
+    </div>
+
     <button class="sample" id="sample"></button>
+  </section>
+
+  <!-- ============ GÖKYÜZÜ ============ -->
+  <section class="view" id="v-sky">
+    <div class="hero">
+      <div class="eyebrow" id="skyEyebrow"></div>
+      <h1 id="skyTitle"></h1>
+      <p id="skyIntro"></p>
+    </div>
+    <div class="card skycard">
+      <canvas id="sky"></canvas>
+      <div class="reticle"></div>
+      <div class="skydir" id="skyDir"></div>
+      <div class="skyhint" id="skyHint"></div>
+    </div>
+    <button class="cam-btn" id="skyStart"></button>
+    <div class="card now" id="skyNow"></div>
+    <div class="block">
+      <div class="sh"><h3 id="skyListTitle"></h3><span id="skyListMeta"></span></div>
+      <div class="card route" id="skyList"></div>
+    </div>
+    <div class="block">
+      <div class="sh"><h3 id="moonTitle"></h3></div>
+      <div class="card moon" id="moon"></div>
+    </div>
+  </section>
+
+  <!-- ============ ALIŞVERİŞ ============ -->
+  <section class="view" id="v-shop">
+    <div class="hero">
+      <div class="eyebrow" id="shopEyebrow"></div>
+      <h1 id="shopTitle"></h1>
+      <p id="shopIntro"></p>
+    </div>
+    <button class="cam-btn big" id="shopScan"></button>
+    <div id="shopResult"></div>
+    <div class="block" id="shopHistBlock">
+      <div class="sh"><h3 id="shopHistTitle"></h3><span id="shopHistMeta"></span></div>
+      <div class="card route" id="shopHist"></div>
+    </div>
+    <p class="fine" id="shopFine"></p>
+  </section>
+
+  <!-- ============ GÜNLÜK ============ -->
+  <section class="view" id="v-log">
+    <div class="hero">
+      <div class="eyebrow" id="logEyebrow"></div>
+      <h1 id="logTitle"></h1>
+      <p id="logIntro"></p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="block">
+      <div class="sh"><h3 id="savedTitle"></h3><span id="savedMeta"></span></div>
+      <div class="card route" id="saved"></div>
+    </div>
+    <div class="block">
+      <div class="sh"><h3 id="visitTitle"></h3><span id="visitMeta"></span></div>
+      <div class="card route" id="visits"></div>
+    </div>
+    <div class="block">
+      <div class="sh"><h3 id="seenTitle"></h3><span id="seenMeta"></span></div>
+      <div class="card route" id="seen"></div>
+    </div>
+    <div class="block">
+      <div class="sh"><h3 id="setTitle"></h3></div>
+      <div class="card settings" id="settings"></div>
+    </div>
   </section>
 </div>
 
 <nav><div class="in">
-  <button class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="tabGezi"></span></button>
-  <button class="soon" data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span id="tabSky"></span></button>
-  <button class="soon" data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg><span id="tabShop"></span></button>
+  <button data-tab="gezi" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="tabGezi"></span></button>
+  <button data-tab="sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span id="tabSky"></span></button>
+  <button data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg><span id="tabShop"></span></button>
+  <button data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/></svg><span id="tabLog"></span></button>
 </div></nav>
+
 <div class="toast" id="toast"></div>
 
+<!-- Kamera katmanı (Gezi ve Alışveriş ortak kullanır) -->
 <div class="cam" id="cam">
   <video id="video" playsinline muted autoplay></video>
   <img class="shot" id="shot" alt="">
@@ -203,382 +152,15 @@
   <div class="sheet" id="sheet"></div>
 </div>
 
-<script>
-const GALATA = [
-  { id:"kule", lat:41.02560, lng:28.97415,
-    tr:{ ad:"Galata Kulesi", kisa:"Cenevizlilerin 1348'de diktiği kule",
-      metin:"Galata Kulesi, 1348 yılında Cenevizliler tarafından Galata surlarının en yüksek noktası olarak inşa edildi. O dönemki adı, İsa Kulesi anlamına gelen Christea Turris'ti. Osmanlı döneminde gözetleme ve yangın kulesi olarak kullanıldı; şehirde çıkan yangınlar buradan görülüp haber veriliyordu. Evliya Çelebi, on yedinci yüzyılda Hezârfen Ahmed Çelebi'nin kendi yaptığı kanatlarla bu kuleden atlayıp Üsküdar'a süzüldüğünü anlatır. Bunun gerçek mi efsane mi olduğu hâlâ tartışılır. Yaklaşık altmış yedi metre yüksekliğindeki kule bugün müze olarak ziyaret ediliyor; tepesindeki terastan Haliç, Boğaz ve Tarihi Yarımada tek bakışta görülüyor." },
-    en:{ ad:"Galata Tower", kisa:"Built by the Genoese in 1348",
-      metin:"Galata Tower was built by the Genoese in 1348 as the highest point of the Galata walls. Its name at the time was Christea Turris, the Tower of Christ. Under the Ottomans it served as a watchtower for fires; blazes anywhere in the city were spotted and announced from here. The traveller Evliya Çelebi wrote that in the seventeenth century Hezârfen Ahmed Çelebi leapt from this tower on wings he had made himself and glided across to Üsküdar. Whether it really happened is still debated. About sixty-seven metres tall, the tower is now a museum, and its top terrace takes in the Golden Horn, the Bosphorus and the historic peninsula in a single view." } },
-  { id:"kamondo", lat:41.02443, lng:28.97482,
-    tr:{ ad:"Kamondo Merdivenleri", kisa:"Bir banker ailesinin kıvrımlı kestirmesi",
-      metin:"Bankalar Caddesi'ni Galata'nın yokuşlarına bağlayan bu kıvrımlı merdivenler, on dokuzuncu yüzyılın sonlarında Osmanlı'nın önde gelen bankerlerinden Kamondo ailesi tarafından yaptırıldı. Anlatılana göre aile, evleri ile bankaları arasında kısa bir yol istiyordu. Birbirine dolanan basamakları ve sade demir korkulukları, merdivenleri İstanbul'un en çok fotoğraflanan köşelerinden biri yaptı. Fransız fotoğrafçı Henri Cartier-Bresson'un 1964'te burada çektiği kare, bu merdivenleri dünyaya tanıttı." },
-    en:{ ad:"Camondo Stairs", kisa:"A banking family's winding shortcut",
-      metin:"These curving stairs, linking Bankalar Street to the slopes of Galata, were built in the late nineteenth century by the Camondos, one of the leading banking families of the Ottoman Empire. The story goes that the family wanted a short way between their home and their bank. With their intertwining steps and simple iron railings, the stairs became one of the most photographed corners of Istanbul. A 1964 photograph taken here by the French photographer Henri Cartier-Bresson made them known around the world." } },
-  { id:"banka", lat:41.02372, lng:28.97530,
-    tr:{ ad:"Osmanlı Bankası · SALT Galata", kisa:"İki yüzlü banka binası",
-      metin:"Bu görkemli bina, 1892'de Osmanlı Bankası'nın genel merkezi olarak açıldı. Mimarı Alexandre Vallaury'dir ve binanın iki yüzü birbirinden farklıdır: Bankalar Caddesi'ne bakan cephe Avrupai, arka sokağa bakan cephe ise Doğulu bir üslupla tasarlanmıştır. Bu cadde on dokuzuncu yüzyılda imparatorluğun para merkeziydi; bankalar, borsa ve sigorta şirketleri burada sıralanırdı. Bina bugün SALT Galata adıyla kütüphane, arşiv ve sergi alanı olarak kullanılıyor; bodrumdaki eski banka kasaları da gezilebiliyor." },
-    en:{ ad:"Ottoman Bank · SALT Galata", kisa:"A bank with two faces",
-      metin:"This grand building opened in 1892 as the headquarters of the Ottoman Bank. It was designed by Alexandre Vallaury, and its two sides look nothing alike: the facade on Bankalar Street is European, while the one facing the back street is in an Eastern style. In the nineteenth century this street was the financial heart of the empire, lined with banks, the stock exchange and insurance companies. Today the building is SALT Galata, a library, archive and exhibition space, and the old bank vaults in the basement can be visited." } },
-  { id:"arap", lat:41.02305, lng:28.97210,
-    tr:{ ad:"Arap Camii", kisa:"Gotik çan kulesinden minare",
-      metin:"Galata'nın en eski yapılarından biri olan Arap Camii, aslında on dördüncü yüzyılda Dominiken rahiplerinin yaptırdığı bir kiliseydi. Kare planlı çan kulesi bugün minare olarak kullanılıyor ve İtalyan Gotik izlerini hâlâ taşıyor; İstanbul'da Gotik mimarinin ender örneklerinden biridir. Fatih Sultan Mehmed döneminde camiye çevrildi. 1492'den sonra İspanya'dan kaçan Endülüslü Müslümanların bu çevreye yerleşmesiyle halk arasında Arap Camii diye anılmaya başladı." },
-    en:{ ad:"Arap Mosque", kisa:"A minaret that was a Gothic bell tower",
-      metin:"One of the oldest buildings in Galata, the Arap Mosque was originally a church built by Dominican friars in the fourteenth century. Its square bell tower now serves as the minaret and still carries traces of Italian Gothic style, a rare example of Gothic architecture in Istanbul. It was converted into a mosque in the time of Mehmed the Conqueror. After 1492, Muslims fleeing Andalusia in Spain settled in the area, and people began calling it the Arab Mosque." } },
-  { id:"mevlevi", lat:41.02815, lng:28.97455,
-    tr:{ ad:"Galata Mevlevihanesi", kisa:"İstanbul'un ilk Mevlevi dergâhı",
-      metin:"Galata Mevlevihanesi, 1491 yılında kurulan ve İstanbul'un ilk Mevlevi dergâhıdır. Dervişlerin semâ ettiği ahşap semâhane, yüzyıllar boyunca müziğin ve şiirin yuvası oldu. Divan edebiyatının son büyük şairlerinden Şeyh Galip burada şeyhlik yaptı ve bahçedeki hazirede yatıyor; önündeki caddeye de adı verildi. Bugün müze olarak açık olan yapıda belirli günlerde semâ gösterileri düzenleniyor." },
-    en:{ ad:"Galata Mevlevi Lodge", kisa:"Istanbul's first whirling dervish lodge",
-      metin:"Founded in 1491, the Galata Mevlevi Lodge was the first lodge of the Mevlevi order in Istanbul. Its wooden hall, where the dervishes performed their whirling ceremony, was a home of music and poetry for centuries. Şeyh Galip, one of the last great poets of classical Ottoman literature, led the lodge and is buried in its garden; the street in front bears his name. The lodge is now a museum, and whirling ceremonies are held here on certain days." } },
-];
-
-const UI = {
-  tr:{ eyebrow:"Gezi · İstanbul", intro:"Beş durak, yaklaşık bir saatlik yürüyüş. Durağa gel, dinle.",
-       nearest:"En yakın durak", here:"Buradasın", first:"İlk durak", listen:"Dinle", stop:"Durdur", minutes:"dk dinleme",
-       read:"Yazısını oku", hide:"Yazıyı gizle", locate:"Konumumu bul", locating:"Konum aranıyor…",
-       located:"Konum açık · en yakın durak seçiliyor", far:"Galata'dan uzaktasın; durakları yine de dinleyebilirsin.",
-       denied:"Konum izni verilmedi; durağı listeden seçebilirsin.", route:"Rota", stops:"5 durak",
-       tabGezi:"Gezi", tabSky:"Gökyüzü", tabShop:"Alışveriş", soon:"Bu bölüm yakında geliyor", away:"uzakta",
-       eyebrowNear:"Gezi · bulunduğun yer", introNear:(n,km,yuru)=>`${n} durak, toplam yaklaşık ${km}${yuru?' yürüyüş':' yol'}. Durağa gel, dinle.`,
-       stopsN:n=>`${n} durak`, mapBtn:"Rotayı haritada başlat", searching:"Yakındaki gezilecek yerler aranıyor…",
-       none:"Bu çevrede kayıtlı gezilecek yer bulunamadı. Galata örnek turu gösteriliyor.", netErr:"Yerler yüklenemedi. İnternetini kontrol et.",
-       searchPh:"Şehir ya da semt ara (ör. Çankırı)", searchBtn:"Ara", notFound:"Bu yer bulunamadı", sample:"Örnek tur: Galata",
-       myPlace:"Bulunduğum yere dön", src:"Kaynak: Vikipedi", guideLoading:"Rehber anlatımı hazırlanıyor…",
-       cam:"Kameraya tut", camHint:"Bir yapıya ya da tabelaya tut", scanning:"İnceleniyor…", seen:"Kameranın gördüğü",
-       again:"Tekrar çek", unsure:"Emin olamadım", camErr:"Kamera açılamadı. Ayarlar'dan Safari'ye kamera izni ver.",
-       aiErr:"Cevap alınamadı. İnternetini ya da anahtarını kontrol et.",
-       keyTitle:"Kamera için tek seferlik ayar", keyText:"Kamera, gördüğünü Google'ın Gemini yapay zekasına sorarak tanıyor. Bunun için ücretsiz bir Gemini anahtarı gerekiyor. Anahtar sadece bu telefonda saklanır.",
-       keyLink:"Anahtarı buradan al", keyPh:"Gemini anahtarını yapıştır", save:"Kaydet ve devam et", keySaved:"Anahtar kaydedildi" },
-  en:{ eyebrow:"Walk · Istanbul", intro:"Five stops, about an hour's walk. Reach a stop, press play.",
-       nearest:"Nearest stop", here:"You are here", first:"First stop", listen:"Listen", stop:"Stop", minutes:"min listen",
-       read:"Read the text", hide:"Hide the text", locate:"Find my location", locating:"Finding you…",
-       located:"Location on · picking the nearest stop", far:"You're far from Galata, but you can still listen to every stop.",
-       denied:"Location wasn't allowed; pick a stop from the list.", route:"Route", stops:"5 stops",
-       tabGezi:"Walk", tabSky:"Sky", tabShop:"Shopping", soon:"This section is coming soon", away:"away",
-       eyebrowNear:"Walk · where you are", introNear:(n,km,yuru)=>`${n} stops, about ${km}${yuru?' on foot':' in total'}. Reach a stop, press play.`,
-       stopsN:n=>`${n} stops`, mapBtn:"Start the route in Maps", searching:"Looking for places to see nearby…",
-       none:"No listed sights around here. Showing the Galata sample tour.", netErr:"Couldn't load places. Check your connection.",
-       searchPh:"Search a city or area", searchBtn:"Go", notFound:"Place not found", sample:"Sample tour: Galata",
-       myPlace:"Back to where I am", src:"Source: Wikipedia", guideLoading:"Preparing the guide's story…",
-       cam:"Point the camera", camHint:"Point at a building or a sign", scanning:"Looking…", seen:"What the camera sees",
-       again:"Take another", unsure:"Not sure", camErr:"Couldn't open the camera. Allow camera access for Safari in Settings.",
-       aiErr:"No answer came back. Check your connection or your key.",
-       keyTitle:"One-time setup for the camera", keyText:"The camera recognises things by asking Google's Gemini AI. That needs a free Gemini key, which is stored only on this phone.",
-       keyLink:"Get a key here", keyPh:"Paste your Gemini key", save:"Save and continue", keySaved:"Key saved" }
-};
-
-let lang = 'tr';
-try{ lang = localStorage.getItem('gep-lang') || ((navigator.language||'tr').startsWith('tr')?'tr':'en'); }catch(e){}
-let stops = GALATA, mode = 'galata', placeName = 'Galata', center = null, loadingNear = false, netErr = false;
-let pos = null, selected = GALATA[0].id, manual = false, storyOpen = false, speaking = false, geoState = 'idle';
-const $ = id => document.getElementById(id);
-const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-
-function dist(a, b){ const R=6371000, r=Math.PI/180;
-  const dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
-  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)**2;
-  return 2*R*Math.asin(Math.sqrt(h)); }
-function fmt(m){ return m<1000 ? Math.round(m/10)*10+' m' : (m/1000).toFixed(m<10000?1:0).replace('.', lang==='tr'?',':'.')+' km'; }
-function minutes(t){ return Math.max(1, Math.round(t.split(/\s+/).length/130)); }
-
-function render(){
-  const u = UI[lang];
-  document.documentElement.lang = lang;
-  document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on', b.dataset.l===lang));
-  const ref = center || pos;
-  $('place').textContent = placeName;
-  $('eyebrow').textContent = mode==='galata' ? u.eyebrow : u.eyebrowNear;
-  const km = routeLength();
-  $('intro').textContent = mode==='galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
-  $('routeTitle').textContent=u.route; $('routeMeta').textContent=u.stopsN(stops.length);
-  $('q').placeholder=u.searchPh; $('qBtn').textContent=u.searchBtn;
-  $('sample').textContent = mode==='galata' ? (pos ? u.myPlace : '') : u.sample;
-  $('sample').style.display = (mode==='galata' && !pos) ? 'none' : 'block';
-  $('mapBtn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8z"/></svg>${esc(u.mapBtn)}`;
-  $('mapBtn').href = mapsLink();
-  if(loadingNear){
-    $('now').className='card now'; $('now').innerHTML=`<div class="loading"><i></i>${esc(u.searching)}</div>`;
-    $('route').innerHTML=''; $('mapBtn').style.display='none'; $('locate').style.display='none'; $('note').textContent=''; return;
-  }
-  $('mapBtn').style.display='flex';
-  $('tabGezi').textContent=u.tabGezi;
-  $('camBtn').innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.4"/></svg>${esc(u.cam)}`;
-  $('tabSky').innerHTML=esc(u.tabSky); $('tabShop').innerHTML=esc(u.tabShop);
-
-  const s = stops.find(x=>x.id===selected) || stops[0], t = s[lang] || s.tr;
-  if(s.wiki) ensureGuide(s);
-  const d = pos ? dist(pos, s) : null;
-  const isHere = d!==null && d < 60;
-  const label = isHere ? u.here : (pos && !manual ? u.nearest : (pos ? fmt(d)+' '+u.away : u.first));
-  $('now').className = 'card now' + (isHere ? ' here' : '');
-  $('now').innerHTML = `
-    ${s.img?`<img class="pic" src="${esc(s.img)}" alt="">`:''}
-    <div class="tag">${esc(label)}</div>
-    <h2>${esc(t.ad)}</h2>
-    <div class="meta">${esc(t.kisa)}${d!==null && !isHere ? ' · '+fmt(d) : ''}</div>
-    <div class="row">
-      <button class="play" id="play" aria-label="${esc(speaking?u.stop:u.listen)}">${speaking
-        ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'}</button>
-      <div class="lbl"><b>${esc(speaking?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(u.minutes)}</span></div>
-    </div>
-    <div class="story ${storyOpen?'open':''}">${esc(t.metin)}${s.wiki?`<div class="src">${esc(t.rehber?u.src+' · Gemini':u.src)}</div>`:''}</div>
-    <button class="toggle" id="toggle">${esc(storyOpen?u.hide:u.read)}</button>`;
-  $('play').onclick = () => speaking ? stopSpeak() : speak(t.metin);
-  $('toggle').onclick = () => { storyOpen=!storyOpen; render(); };
-
-  $('locate').style.display = geoState==='on' ? 'none' : 'flex';
-  $('locate').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>${esc(geoState==='wait'?u.locating:u.locate)}`;
-  $('note').textContent = geoState==='denied' ? u.denied : (netErr ? u.netErr : (mode==='galata' && pos && dist(pos,GALATA[0])>3000 && !center ? u.none : ''));
-
-  $('route').innerHTML = stops.map((x,i)=>`
-    <button class="stop ${x.id===selected?'sel':''}" data-id="${x.id}">
-      <span class="n">${i+1}</span>
-      <span class="t"><b>${esc((x[lang]||x.tr).ad)}</b><span>${esc((x[lang]||x.tr).kisa)}</span></span>
-      ${x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:`<span class="d">${pos?fmt(dist(pos,x)):''}</span>`}
-    </button>`).join('');
-  document.querySelectorAll('.stop').forEach(b=>b.onclick=()=>{
-    if(b.dataset.id!==selected){ stopSpeak(); storyOpen=false; }
-    selected=b.dataset.id; manual=true; render(); window.scrollTo({top:0,behavior:'smooth'}); });
-}
-
-function pickVoice(){
-  const vs = speechSynthesis.getVoices(); const want = lang==='tr'?'tr':'en';
-  return vs.find(v=>v.lang.toLowerCase().startsWith(want) && /enhanced|premium|yelda|samantha|ava/i.test(v.name))
-      || vs.find(v=>v.lang.toLowerCase().startsWith(want));
-}
-function speak(text){
-  if(!('speechSynthesis' in window)) return toast('Ses desteklenmiyor');
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = lang==='tr'?'tr-TR':'en-US'; const v=pickVoice(); if(v) u.voice=v; u.rate = 0.96;
-  u.onend = u.onerror = () => { speaking=false; render(); };
-  speaking = true; render(); speechSynthesis.speak(u);
-}
-function stopSpeak(){ if('speechSynthesis' in window) speechSynthesis.cancel(); speaking=false; }
-
-function locate(){
-  if(!navigator.geolocation){ geoState='denied'; return render(); }
-  geoState='wait'; render();
-  let first = true;
-  navigator.geolocation.watchPosition(p=>{
-    pos = {lat:p.coords.latitude, lng:p.coords.longitude}; geoState='on';
-    if(first){ first=false; if(!center) loadNear(pos.lat, pos.lng); }
-    if(!manual && !speaking && !loadingNear){ selected = stops.reduce((a,b)=>dist(pos,a)<dist(pos,b)?a:b).id; }
-    render();
-  }, ()=>{ geoState='denied'; render(); }, {enableHighAccuracy:true, maximumAge:10000, timeout:20000});
-}
-
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800); }
-
-
-/* ---------- Kamera ---------- */
-let stream = null, camResult = null;
-const getKey = () => { try{ return localStorage.getItem('gep-key')||'' }catch(e){ return '' } };
-
-function openCam(){
-  if(!getKey()) return showKeySheet(true);
-  $('cam').className='cam open'; $('sheet').className='sheet'; camResult=null;
-  $('camHint').textContent=UI[lang].camHint; $('scanTxt').textContent=UI[lang].scanning;
-  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}, width:{ideal:1920}}, audio:false})
-    .then(st=>{ stream=st; $('video').srcObject=st; })
-    .catch(()=>{ closeCam(); toast(UI[lang].camErr); });
-}
-function closeCam(){ stopSpeak(); if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } $('cam').className='cam'; render(); }
-
-function shoot(){
-  const v=$('video'); if(!v.videoWidth) return;
-  const W=1024, H=Math.round(v.videoHeight*W/v.videoWidth), c=document.createElement('canvas');
-  c.width=W; c.height=H; c.getContext('2d').drawImage(v,0,0,W,H);
-  const url=c.toDataURL('image/jpeg',0.82); $('shot').src=url;
-  $('cam').className='cam open frozen busy';
-  ask(url.split(',')[1]).then(r=>{ camResult=r; showResult(); })
-    .catch(()=>{ camResult={ad:UI[lang].unsure, metin:UI[lang].aiErr, hata:true}; showResult(); });
-}
-
-async function ask(b64){
-  const near = pos ? `The user is at latitude ${pos.lat.toFixed(5)}, longitude ${pos.lng.toFixed(5)} (Istanbul).` : 'The user is probably in Istanbul.';
-  const dil = lang==='tr' ? 'Türkçe' : 'English';
-  const prompt = `${near} Look at the photo and identify the main thing in it: a landmark, building, street, monument, sign or object.
-Write in ${dil}. Return ONLY JSON: {"ad": "short name", "kisa": "one short line", "metin": "about 90-120 words told like a friendly tour guide: what it is and its history or the most interesting facts", "emin": true/false}.
-If you cannot identify it confidently, set "emin": false, describe what you see and say honestly that you are not sure. Never invent dates or facts.`;
-  const body = {contents:[{parts:[{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}]}],
-                generationConfig:{temperature:0.4, responseMimeType:'application/json'}};
-  let last;
-  for(const m of ['gemini-flash-latest','gemini-flash-lite-latest']){
-    try{
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(getKey())}`,
-        {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-      if(!r.ok){ last=new Error(r.status); continue; }
-      const j = await r.json();
-      const txt = (j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
-      const o = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}')+1));
-      if(o.ad && o.metin) return o;
-    }catch(e){ last=e; }
-  }
-  throw last||new Error('no answer');
-}
-
-function showResult(){
-  const u=UI[lang], r=camResult;
-  $('cam').className='cam open frozen';
-  $('sheet').innerHTML=`<div class="grab"></div>
-    <div class="tag">${esc(r.emin===false&&!r.hata?u.unsure:u.seen)}</div>
-    <h2>${esc(r.ad)}</h2>${r.kisa?`<div class="meta" style="color:var(--ink3);font-size:14px">${esc(r.kisa)}</div>`:''}
-    ${r.hata?'':`<div class="row"><button class="play" id="camPlay">${speaking
-      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>'
-      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>'}</button>
-      <div class="lbl"><b>${esc(speaking?u.stop:u.listen)}</b><span>${minutes(r.metin)} ${esc(u.minutes)}</span></div></div>`}
-    <div class="story">${esc(r.metin)}</div>
-    <button class="again" id="again">${esc(u.again)}</button>`;
-  requestAnimationFrame(()=>$('sheet').classList.add('up'));
-  if($('camPlay')) $('camPlay').onclick=()=>{ if(speaking){ stopSpeak(); showResult(); } else { speakThen(r.metin, showResult); showResult(); } };
-  $('again').onclick=()=>{ stopSpeak(); $('sheet').className='sheet'; $('cam').className='cam open'; };
-}
-function speakThen(text, cb){
-  if(!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel(); const ut=new SpeechSynthesisUtterance(text);
-  ut.lang=lang==='tr'?'tr-TR':'en-US'; const v=pickVoice(); if(v) ut.voice=v; ut.rate=.96;
-  ut.onend=ut.onerror=()=>{ speaking=false; cb(); }; speaking=true; speechSynthesis.speak(ut);
-}
-
-function showKeySheet(thenCam){
-  const u=UI[lang];
-  $('cam').className='cam open frozen';
-  $('shot').removeAttribute('src');
-  $('sheet').innerHTML=`<div class="grab"></div>
-    <div class="tag">${esc(u.keyTitle)}</div>
-    <p class="small">${esc(u.keyText)}</p>
-    <p class="small"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">${esc(u.keyLink)} ↗</a></p>
-    <input id="keyIn" type="password" autocomplete="off" placeholder="${esc(u.keyPh)}" value="${esc(getKey())}">
-    <button class="save" id="keySave">${esc(u.save)}</button>`;
-  requestAnimationFrame(()=>$('sheet').classList.add('up'));
-  $('keySave').onclick=()=>{ const k=$('keyIn').value.trim(); if(!k) return;
-    try{ localStorage.setItem('gep-key',k) }catch(e){}
-    toast(u.keySaved); $('cam').className='cam'; if(thenCam) setTimeout(openCam,250); };
-}
-
-$('camBtn').onclick = openCam;
-$('camClose').onclick = closeCam;
-$('shutter').onclick = shoot;
-$('camKey').onclick = () => { if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; } showKeySheet(true); };
-
-
-/* ---------- Bulunduğun yerin rotası (Vikipedi) ---------- */
-const KEYS = {
-  tr:['cami','camii','mescit','kale','kalesi','müze','müzesi','han','hanı','hamam','hamamı','köprü','köprüsü','türbe','türbesi',
-      'mağara','mağarası','kilise','kilisesi','saray','sarayı','çeşme','çeşmesi','medrese','medresesi','külliye','külliyesi','bedesten',
-      'kule','kulesi','anıt','anıtı','tekke','dergâh','dergahı','kervansaray','şelale','şelalesi','kanyon','kanyonu','göl','gölü',
-      'tabiat parkı','milli park','antik','tiyatro','tiyatrosu','ören','höyük','höyüğü','konak','konağı','köşk','köşkü','kasır','kasrı',
-      'sinagog','surlar','suru','kemer','meydanı','çarşı','çarşısı','arasta','saat kulesi','manastır','manastırı','mozaik','şapel','tuz'],
-  en:['mosque','castle','fortress','museum','bridge','tomb','mausoleum','cave','church','cathedral','palace','fountain','madrasa',
-      'tower','monument','bath','hammam','caravanserai','waterfall','canyon','lake','national park','ancient','theatre','theater',
-      'ruins','mansion','synagogue','square','bazaar','market','monastery','basilica','gate','walls','lighthouse']
-};
-const SKIP = ['mahallesi','köyü','ilçesi','ili','lisesi','okulu','üniversitesi','fakültesi','istasyonu','durağı','hastanesi','stadyumu',
-              'spor','kulübü','belediyesi','seçim','neighbourhood','district','school','university','station','hospital','stadium','club'];
-
-function isSight(title){
-  const t = title.toLocaleLowerCase(lang==='tr'?'tr':'en');
-  if(SKIP.some(w=>t.endsWith(' '+w)||t.includes(' '+w+' '))) return false;
-  return KEYS[lang].some(w=>t.includes(w)) || KEYS[lang==='tr'?'en':'tr'].some(w=>t.includes(w));
-}
-
-async function wiki(params){
-  const u = `https://${lang}.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&` + new URLSearchParams(params);
-  const r = await fetch(u); if(!r.ok) throw new Error(r.status); return r.json();
-}
-
-async function placeLabel(lat, lng){
-  try{
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=${lat}&lon=${lng}&accept-language=${lang}`);
-    const j = await r.json(), a = j.address||{};
-    return a.town || a.city_district || a.city || a.county || a.province || a.state || '';
-  }catch(e){ return ''; }
-}
-
-function orderRoute(list, start){
-  const rest=[...list], out=[]; let cur=start;
-  while(rest.length){ rest.sort((a,b)=>dist(cur,a)-dist(cur,b)); cur=rest.shift(); out.push(cur); }
-  return out;
-}
-function routeLength(){
-  if(!stops.length) return 0; let m=0, cur=(center||pos||stops[0]);
-  for(const x of stops){ m+=dist(cur,x); cur=x; } return m;
-}
-function mapsLink(){
-  if(!stops.length) return '#';
-  const ll = x => `${x.lat.toFixed(6)},${x.lng.toFixed(6)}`;
-  const start = pos || center, last = stops[stops.length-1], mids = stops.slice(0,-1).slice(0,8);
-  const walk = routeLength() < 6000;
-  return 'https://www.google.com/maps/dir/?api=1' + (start?`&origin=${ll(start)}`:'') + `&destination=${ll(last)}`
-       + (mids.length?`&waypoints=${encodeURIComponent(mids.map(ll).join('|'))}`:'') + `&travelmode=${walk?'walking':'driving'}`;
-}
-
-async function loadNear(lat, lng, label){
-  if(dist({lat,lng}, GALATA[0]) < 1500){ stops=GALATA; mode='galata'; placeName='Galata'; selected=GALATA[0].id; return render(); }
-  loadingNear=true; netErr=false; render();
-  try{
-    const g = await wiki({action:'query', list:'geosearch', gscoord:`${lat}|${lng}`, gsradius:10000, gslimit:200});
-    let c = (g.query?.geosearch||[]).filter(x=>isSight(x.title));
-    let near = c.filter(x=>x.dist<=3000);
-    if(near.length < 4) near = c;
-    near = near.slice(0, 8);
-    if(!near.length){ stops=GALATA; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; loadingNear=false; netErr=false; toast(UI[lang].none); return render(); }
-    const d = await wiki({action:'query', pageids:near.map(x=>x.pageid).join('|'), prop:'extracts|description|pageimages',
-                         exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail', pithumbsize:600});
-    const pages = d.query?.pages||[];
-    const list = near.map(x=>{
-      const pg = pages.find(p=>p.pageid===x.pageid)||{};
-      let metin = (pg.extract||'').replace(/\s*\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
-      const w = metin.split(' '); if(w.length>140) metin = w.slice(0,140).join(' ').replace(/[,;:]?$/,'') + '…';
-      const t = {ad:x.title, kisa:pg.description || '', metin: metin || x.title};
-      return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:pg.thumbnail?.source||'', wiki:true, title:x.title, tr:t, en:t};
-    });
-    center = {lat, lng};
-    stops = orderRoute(list, pos || center); mode='near'; selected=stops[0].id; manual=false; storyOpen=false;
-    placeName = label || await placeLabel(lat, lng) || (lang==='tr'?'Yakınındakiler':'Nearby');
-  }catch(e){ netErr=true; }
-  loadingNear=false; render();
-}
-
-/* Vikipedi özetini Gemini ile rehber diline çevir (anahtar varsa, bir kere, telefonda saklanır) */
-const guideBusy = new Set();
-function ensureGuide(s){
-  const t = s[lang]; if(!t || t.rehber || guideBusy.has(s.id) || !getKey()) return;
-  const ck = 'gep-g-'+lang+'-'+s.id;
-  try{ const c = localStorage.getItem(ck); if(c){ t.metin=c; t.rehber=true; return; } }catch(e){}
-  guideBusy.add(s.id);
-  const dil = lang==='tr'?'Türkçe':'English';
-  const prompt = `Aşağıdaki ansiklopedi bilgisini, yerinde duran bir gezgine anlatan samimi bir tur rehberi gibi ${dil} olarak yeniden yaz. 90-120 kelime. SADECE verilen bilgileri kullan, yeni tarih, sayı ya da olay uydurma. Başlık, liste, emoji yok; düz metin döndür.\n\nYer: ${s.title}\nBilgi: ${t.metin}`;
-  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${encodeURIComponent(getKey())}`,
-    {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:.5}})})
-    .then(r=>r.ok?r.json():Promise.reject(r.status))
-    .then(j=>{ const txt=(j.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('').trim();
-      if(txt.length>80){ t.metin=txt; t.rehber=true; try{localStorage.setItem(ck,txt)}catch(e){} if(!speaking) render(); } })
-    .catch(()=>{}).finally(()=>guideBusy.delete(s.id));
-}
-
-async function searchPlace(q){
-  try{
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=${lang}&q=${encodeURIComponent(q)}`);
-    const j = await r.json(); if(!j.length) return toast(UI[lang].notFound);
-    const name = (j[0].display_name||q).split(',')[0];
-    stopSpeak(); loadNear(+j[0].lat, +j[0].lon, name);
-  }catch(e){ toast(UI[lang].netErr); }
-}
-$('search').onsubmit = e => { e.preventDefault(); const q=$('q').value.trim(); if(q){ $('q').blur(); searchPlace(q); } };
-$('sample').onclick = () => { stopSpeak();
-  if(mode==='galata' && pos){ center=null; loadNear(pos.lat,pos.lng); }
-  else { stops=GALATA; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; manual=true; storyOpen=false; render(); window.scrollTo({top:0,behavior:'smooth'}); } };
-
-$('locate').onclick = locate;
-document.querySelectorAll('.lang button').forEach(b=>b.onclick=()=>{ stopSpeak(); lang=b.dataset.l; try{localStorage.setItem('gep-lang',lang)}catch(e){}
-  if(mode==='near' && center){ loadNear(center.lat, center.lng); } else render(); });
-document.querySelectorAll('[data-soon]').forEach(b=>b.onclick=()=>toast(UI[lang].soon));
-if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = ()=>{};
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-render();
-</script>
+<script src="vendor/leaflet.js"></script>
+<script src="vendor/astronomy.browser.min.js"></script>
+<script src="js/galata.js"></script>
+<script src="js/core.js"></script>
+<script src="js/kamera.js"></script>
+<script src="js/gezi.js"></script>
+<script src="js/gokyuzu.js"></script>
+<script src="js/alisveris.js"></script>
+<script src="js/gunluk.js"></script>
+<script>App.start();</script>
 </body>
 </html>
