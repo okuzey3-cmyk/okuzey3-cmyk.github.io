@@ -272,6 +272,7 @@ const App = {
   modules: {},
   register(name, mod){ this.modules[name] = mod; },
   refresh(){
+    const ll = document.getElementById('legalLink'); if(ll) ll.textContent = lang==='en' ? 'Privacy & sources' : 'Gizlilik ve kaynaklar';
     const u = T();
     document.documentElement.lang = lang;
     document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on', b.dataset.l===lang));

@@ -615,7 +615,8 @@ body[data-only] nav,body[data-only] .fab{display:none}
 body[data-only]{padding-bottom:calc(36px + env(safe-area-inset-bottom))}
 .foot{text-align:center;padding:8px 0 calc(24px + env(safe-area-inset-bottom))}
 .foot button{font-size:13px;color:var(--ink3);text-decoration:underline;text-underline-offset:3px}
-body:not([data-only]) .foot{display:none}
+body[data-count="3"] .foot,body[data-count="4"] .foot{display:none}
+body[data-count="2"] .foot{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 
 /* Gökyüzü bilgi kartı (Gezi kartından ayrı) */
 .skyinfo{margin:14px 0 0;padding:24px 22px 24px;border-radius:30px;position:relative;overflow:hidden;

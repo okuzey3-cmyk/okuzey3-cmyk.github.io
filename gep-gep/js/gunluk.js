@@ -13,7 +13,7 @@ const LEGAL = {
      ['Yapay zekâ uyarısı','Anlatımlar ve ürün yorumları yapay zekâ ile üretilir, yanılabilir. Alerji, sağlık ve güvenlik konularında her zaman ürünün etiketine ve resmî kaynaklara bak.'],
      ['Kullanım koşulları','Gep Gep bilgilendirme amaçlıdır. Anlatımlar, ürün yorumları ve gökyüzü konumları yaklaşıktır; hatalı ya da eksik olabilir. Uygulamayı kullanırken trafik, güvenlik ve yasalar sana aittir; yürürken ekrana değil çevrene dikkat et. Alerji, sağlık, hukuk ve para konularında verilen bilgi tavsiye yerine geçmez. Uygulamayı kötüye kullanmaya çalışmamayı (aşırı istek göndermek gibi) kabul edersin; gerekirse erişim sınırlanabilir.'],
      ['KVKK aydınlatma (6698)','Veri sorumlusu: Gep Gep geliştiricisi. İşlenen veriler: kamerayla çektiğin fotoğraf (yorumlanmak üzere, anlık), yaklaşık konum (yakındaki duraklar için), yazdığın arama metni. Amaç: istediğin anlatımı sana göstermek. Hukuki sebep: hizmetin sunulması ve ilk kullanımda verdiğin onay. Aktarım: fotoğraf Google’a (Gemini), arama Nominatim’e, ürün barkodu Open Food Facts’e gider; bu hizmetler yurt dışındadır. Günlük, rota ve ayarların yalnızca telefonunda durur; “Sil” ile kaldırırsın. KVKK madde 11 kapsamındaki haklarını kullanmak için iletişim bölümündeki adresi kullanabilirsin.'],
-     ['Kaynaklar','Yer bilgileri ve fotoğrafları: Wikipedia (CC BY-SA, yazarları ilgili sayfalarda). Harita: © OpenStreetMap katkıcıları, © CARTO. Barkodlu ürün bilgisi: Open Food Facts (ODbL). Gök cisimleri: Astronomy Engine (MIT). Harita aracı: Leaflet (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini.']
+     ['Kaynaklar','Yer bilgileri ve fotoğrafları: Wikipedia (CC BY-SA, yazarları ilgili sayfalarda). Harita: OpenFreeMap, © OpenMapTiles, veri © OpenStreetMap katkıcıları. Barkodlu ürün bilgisi: Open Food Facts (ODbL). Gök cisimleri: Astronomy Engine (MIT). Harita aracı: MapLibre GL (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini.']
     ]},
   en:{btn:'Privacy & sources', sub:'Where your data goes, and what we use', title:'Privacy & sources', close:'Close',
     sec:[
@@ -23,7 +23,7 @@ const LEGAL = {
      ['AI notice','Stories and product comments are AI-generated and can be wrong. For allergies, health and safety always check the product label and official sources.'],
      ['Terms of use','Gep Gep is for information only. Stories, product comments and sky positions are approximate and may be wrong or incomplete. You are responsible for your own safety and for obeying the law; watch your surroundings, not the screen, while walking. Information about allergies, health, law or money is not advice. Do not abuse the service (for example by sending excessive requests); access may be limited.'],
      ['Privacy notice (KVKK/GDPR)','Controller: the Gep Gep developer. Data processed: the photo you take (instantly, to be interpreted), approximate location (for nearby stops), the search text you type. Purpose: to show you the story you asked for. Legal basis: providing the service and your consent on first use. Transfers: photos go to Google (Gemini), searches to Nominatim, product barcodes to Open Food Facts; these services are abroad. Your journal, routes and settings stay on your phone; “Delete” removes them. To exercise your data rights use the contact below.'],
-     ['Sources','Places and photos: Wikipedia (CC BY-SA, authors on each page). Map: © OpenStreetMap contributors, © CARTO. Barcode data: Open Food Facts (ODbL). Sky: Astronomy Engine (MIT). Map tool: Leaflet (BSD). Relay: Cloudflare. AI: Google Gemini.']
+     ['Sources','Places and photos: Wikipedia (CC BY-SA, authors on each page). Map: OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors. Barcode data: Open Food Facts (ODbL). Sky: Astronomy Engine (MIT). Map tool: MapLibre GL (BSD). Relay: Cloudflare. AI: Google Gemini.']
     ]}
 };
 const LEGAL_SKY = {
@@ -48,8 +48,8 @@ const LEGAL_GS = {
     ['Yol tarifi','“Yol tarifi” düğmesine bastığında Google Haritalar açılır ve durak koordinatları oraya gider. Basmazsan hiçbir şey gönderilmez.'],
     ['Yapay zekâ uyarısı','Kamerayla yapılan tanıma ve anlatımlar yapay zekâ ile üretilir, yanılabilir. Durak anlatımları bu uygulamaya özgü yazılmıştır, yine de önemli bilgileri resmî kaynaklardan doğrula.'],
     ['Kullanım koşulları','Gep Gep bilgilendirme amaçlıdır. Anlatımlar, gök cisimlerinin konumları ve yol bilgileri yaklaşık değerlerdir. Güneş’e asla doğrudan ya da kamerayla bakma. Yürürken ekrana değil çevrene ve trafiğe dikkat et. Uygulamayı kötüye kullanmaya çalışmamayı (aşırı istek göndermek gibi) kabul edersin; gerekirse erişim sınırlanabilir.'],
-    ['KVKK aydınlatma (6698)','Veri sorumlusu: Gep Gep geliştiricisi. İşlenen veri: kamerayla çektiğin fotoğraf (yalnızca o anda yorumlanmak üzere). Amaç: istediğin anlatımı göstermek. Hukuki sebep: hizmetin sunulması ve ilk kullanımda verdiğin onay. Aktarım: fotoğraf Google’a (Gemini) gider, bu servis yurt dışındadır. Diğer her şey (konum, günlük, ayarlar) yalnızca telefonunda kalır; günlükteki “Sil” ile kaldırırsın. KVKK madde 11 haklarını kullanmak için iletişim bölümündeki adresi kullanabilirsin.'],
-    ['Kaynaklar','Durak fotoğrafları: Wikimedia Commons; yalnızca serbest lisanslı (CC0, kamu malı, CC BY, CC BY-SA) fotoğraflar gösterilir, yazar ve lisans her fotoğrafın üstünde yazar. Harita: © OpenStreetMap katkıcıları, © CARTO. Gök cisimleri hesabı: Astronomy Engine (MIT). Harita aracı: Leaflet (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini. Durak ve gök cismi anlatımları bu uygulamaya özgü yazılmıştır.']]},
+    ['KVKK aydınlatma (6698)','Veri sorumlusu: Gep Gep geliştiricisi. İşlenen veri: kamerayla çektiğin fotoğraf (yalnızca o anda yorumlanmak üzere). Amaç: istediğin anlatımı göstermek. Hukuki sebep: hizmetin sunulması ve ilk kullanımda verdiğin onay. Aktarım: fotoğraf Google’a (Gemini) gider, bu servis yurt dışındadır. Diğer her şey (konum, gezildi işaretleri, kayıtlı rotalar, ayarlar) yalnızca telefonunda kalır; bu sayfanın altındaki “Verilerimi sil” düğmesiyle kaldırırsın. KVKK madde 11 haklarını kullanmak için iletişim bölümündeki adresi kullanabilirsin.'],
+    ['Kaynaklar','Durak fotoğrafları: Wikimedia Commons; yalnızca serbest lisanslı (CC0, kamu malı, CC BY, CC BY-SA) fotoğraflar gösterilir, yazar ve lisans her fotoğrafın üstünde yazar. Harita: OpenFreeMap, © OpenMapTiles, veri © OpenStreetMap katkıcıları. Gök cisimleri hesabı: Astronomy Engine (MIT). Harita aracı: MapLibre GL (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini. Durak ve gök cismi anlatımları bu uygulamaya özgü yazılmıştır.']]},
   en:{title:'Privacy & sources', close:'Close', sec:[
     ['Where is your data?','Your journal, visited stops and settings stay on this phone only. Gep Gep has no accounts, logs or tracking. The sky maths and finding the nearest stop happen on your phone; your location is never sent to a server.'],
     ['Camera photos','When you point the camera, the photo is sent to an AI service (Google Gemini) so it can tell you what it is. We do not keep it. Please avoid photographing other people’s faces or personal information.'],
@@ -57,8 +57,8 @@ const LEGAL_GS = {
     ['Directions','When you tap “Directions”, Google Maps opens and the stop coordinates go to it. If you do not tap, nothing is sent.'],
     ['AI notice','Camera recognition and stories are AI-generated and can be wrong. The stop descriptions are written for this app, but verify important facts with official sources.'],
     ['Terms of use','Gep Gep is for information only. Stories, sky positions and route details are approximate. Never look at the Sun directly or through a camera. Watch your surroundings and traffic while walking. Do not abuse the service (for example by sending excessive requests); access may be limited.'],
-    ['Privacy notice (KVKK/GDPR)','Controller: the Gep Gep developer. Data processed: the photo you take (only to be interpreted at that moment). Purpose: to show the story you asked for. Legal basis: providing the service and your consent on first use. Transfer: the photo goes to Google (Gemini), which is abroad. Everything else (location, journal, settings) stays on your phone; “Delete” in the journal removes it. To exercise your data rights use the contact below.'],
-    ['Sources','Stop photos: Wikimedia Commons; only freely licensed (CC0, public domain, CC BY, CC BY-SA) photos are shown, with author and licence on each photo. Map: © OpenStreetMap contributors, © CARTO. Sky maths: Astronomy Engine (MIT). Map tool: Leaflet (BSD). Relay: Cloudflare. AI: Google Gemini. Stop and sky descriptions are original to this app.']]}
+    ['Privacy notice (KVKK/GDPR)','Controller: the Gep Gep developer. Data processed: the photo you take (only to be interpreted at that moment). Purpose: to show the story you asked for. Legal basis: providing the service and your consent on first use. Transfer: the photo goes to Google (Gemini), which is abroad. Everything else (location, visited marks, saved routes, settings) stays on your phone; the “Delete my data” button at the bottom of this page removes it. To exercise your data rights use the contact below.'],
+    ['Sources','Stop photos: Wikimedia Commons; only freely licensed (CC0, public domain, CC BY, CC BY-SA) photos are shown, with author and licence on each photo. Map: OpenFreeMap, © OpenMapTiles, data © OpenStreetMap contributors. Sky maths: Astronomy Engine (MIT). Map tool: MapLibre GL (BSD). Relay: Cloudflare. AI: Google Gemini. Stop and sky descriptions are original to this app.']]}
 };
 function openLegal(){
   const f = (GEP.features||[]).join();
@@ -68,10 +68,15 @@ function openLegal(){
   el.innerHTML = `<div class="legal-in"><div class="grab"></div><h2>${esc(L.title)}</h2>`+
     L.sec.map(([h,t])=>`<h4>${esc(h)}</h4><p>${esc(t)}</p>`).join('')+
     (GEP.contact?`<h4>${lang==='tr'?'İletişim':'Contact'}</h4><p><a href="mailto:${esc(GEP.contact)}">${esc(GEP.contact)}</a></p>`:'')+
+    `<button class="again" id="legalDel" style="margin-bottom:8px;background:rgba(255,255,255,.07);color:var(--ink)">${lang==='tr'?'Verilerimi sil':'Delete my data'}</button>`+
     `<button class="again" id="legalX">${esc(L.close)}</button></div>`;
   requestAnimationFrame(()=>el.classList.add('on'));
   const close=()=>{ el.classList.remove('on'); };
-  document.getElementById('legalX').onclick=close; el.onclick=e=>{ if(e.target===el) close(); };
+  document.getElementById('legalX').onclick=close;
+  document.getElementById('legalDel').onclick=()=>{
+    if(!confirm(lang==='tr'?'Bu telefondaki tüm Gep Gep verileri (gezildi işaretleri, kayıtlı rotalar, ayarlar) silinsin mi?':'Delete all Gep Gep data on this phone (visited marks, saved routes, settings)?')) return;
+    Store.clearAll(); toast(lang==='tr'?'Veriler silindi':'Data deleted'); close(); setTimeout(()=>location.reload(), 700);
+  }; el.onclick=e=>{ if(e.target===el) close(); };
 }
 
 const Log = (() => {
