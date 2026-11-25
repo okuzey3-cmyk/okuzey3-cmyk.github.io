@@ -32,24 +32,28 @@
 
     <div class="progress" id="progress"></div>
     <div class="card now" id="now"></div>
-    <button class="cam-btn" id="camBtn"></button>
-    <button class="locate" id="locate"></button>
-    <p class="note" id="note"></p>
-    <form class="search" id="search"><input id="q" type="search" enterkeyhint="search" autocomplete="off"><button id="qBtn" type="submit"></button></form>
+    <button class="cam-btn" id="camBtn" hidden></button>
 
-    <div class="block">
-      <div class="sh"><h3 id="mapTitle"></h3><button class="link" id="mapMe"></button></div>
-      <div class="card mapcard"><div id="map"></div></div>
-    </div>
+    <form class="finder" id="search">
+      <button type="button" class="locate" id="locate"></button>
+      <input id="q" type="search" enterkeyhint="search" autocomplete="off">
+      <button id="qBtn" type="submit"></button>
+    </form>
+    <p class="note" id="note"></p>
 
     <div class="block">
       <div class="sh"><h3 id="routeTitle"></h3><span id="routeMeta"></span></div>
       <div class="card route" id="route"></div>
-      <a class="mapbtn" id="mapBtn" target="_blank" rel="noopener"></a>
       <div class="twin">
         <button class="ghost" id="saveRoute"></button>
         <button class="ghost" id="resetRoute"></button>
       </div>
+    </div>
+
+    <div class="block">
+      <div class="sh"><h3 id="mapTitle"></h3><button class="link" id="mapMe"></button></div>
+      <div class="card mapcard"><div id="map"></div></div>
+      <a class="mapbtn" id="mapBtn" target="_blank" rel="noopener"></a>
     </div>
 
     <div class="block" id="farBlock">
@@ -131,9 +135,11 @@
 <nav><div class="in">
   <button data-tab="gezi" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span id="tabGezi"></span></button>
   <button data-tab="sky"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span id="tabSky"></span></button>
+  <i class="gap"></i>
   <button data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.3"/></svg><span id="tabShop"></span></button>
   <button data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/></svg><span id="tabLog"></span></button>
 </div></nav>
+<button class="fab" id="fab" aria-label="Kamera"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="12.5" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="24" cy="24" r="4.2" fill="currentColor"/></svg></button>
 
 <div class="toast" id="toast"></div>
 
@@ -165,6 +171,11 @@
 <script src="js/alisveris.js"></script>
 <script src="js/gunluk.js"></script>
 <script src="js/acilis.js"></script>
-<script>App.start(); Onb.start();</script>
+<script>App.start(); Onb.start();
+document.getElementById('fab').onclick=function(){
+  var on=(document.querySelector('nav button.on')||{dataset:{}}).dataset.tab;
+  if(on==='log'){ App.show('gezi'); on='gezi'; }
+  document.getElementById(on==='shop'?'shopScan':on==='sky'?'skyStart':'camBtn').click();
+};</script>
 </body>
 </html>

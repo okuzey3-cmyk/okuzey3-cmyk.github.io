@@ -298,15 +298,19 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     else if(pos && !manual) label = u.nearest;
     else if(pos) label = fmt(d)+' '+u.away;
     else label = (firstLeft && firstLeft.id===s.id && doneN) ? u.next : (stops[0].id===s.id ? u.first : u.next);
+    const idx = stops.findIndex(x=>x.id===s.id);
     $('now').className = 'card now' + (isHere && !isDone ? ' here' : '') + (isDone ? ' done' : '');
     $('now').innerHTML = `
-      ${s.img?`<img class="pic" src="${esc(s.img)}" alt="">`:''}
-      <div class="tag">${esc(label)}</div>
-      <h2>${esc(t.ad)}</h2>
-      <div class="meta">${esc(t.kisa)}${d!==null && !isHere && !s.far ? ' · '+fmt(d) : ''}</div>
+      <div class="media ${s.img?'':'ph'}" data-k="${esc(s.id)}">
+        ${s.img?`<img class="pic" src="${esc(s.img)}" alt="" onerror="this.parentNode.classList.add('ph');this.remove()">`:`<span class="mono">${esc(t.ad.charAt(0))}</span>`}
+        <div class="shade"></div>
+        <div class="tag">${esc(label)}</div>
+        ${idx>=0?`<div class="pos">${idx+1} / ${stops.length}</div>`:''}
+        <div class="cap"><h2>${esc(t.ad)}</h2>
+          <div class="meta">${esc(t.kisa)}${d!==null && !isHere && !s.far ? ' · '+fmt(d) : ''}</div></div>
+      </div>
       <div class="row">
-        <button class="play" data-play="${esc(s.id)}">${Voice.is(s.id)?ICON.pause:ICON.play}</button>
-        <div class="lbl"><b>${esc(Voice.is(s.id)?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(u.minutes)}</span></div>
+        <button class="play" data-play="${esc(s.id)}">${Voice.is(s.id)?ICON.pause:ICON.play}<b>${esc(Voice.is(s.id)?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(String(u.minutes).split(" ")[0])}</span></button>
         ${Share.button('stop')}
         <button class="check ${isDone?'on':''}" id="check" aria-label="${esc(isDone?u.unmark:u.markVisited)}" title="${esc(isDone?u.unmark:u.markVisited)}">${ICON.check}</button>
       </div>
@@ -317,15 +321,16 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
 
     /* konum düğmesi ve notlar */
     $('locate').style.display = geoState==='on' ? 'none' : 'flex';
-    $('locate').innerHTML = ICON.target + esc(geoState==='wait'?u.locating:u.locate);
+    $('locate').innerHTML = ICON.target; $('locate').setAttribute('aria-label', geoState==='wait'?u.locating:u.locate); $('locate').classList.toggle('wait', geoState==='wait');
     $('note').textContent = geoState==='denied' ? u.denied : (netErr ? u.netErr : '');
 
     /* rota listesi */
+    const th = (x, inner) => `<span class="th ${x.img?'has':''}">${x.img?`<img src="${esc(x.img)}" alt="" loading="lazy" onerror="this.remove()">`:''}<b>${inner}</b></span>`;
     $('route').innerHTML = stops.map((x,i)=>{ const tx=txt(x), done=v.has(x.id); return `
       <button class="stop ${x.id===selected?'sel':''} ${done?'visited':''}" data-id="${x.id}">
-        <span class="n">${done?'✓':i+1}</span>
+        ${th(x, done?'✓':i+1)}
         <span class="t"><b>${esc(tx.ad)}</b><span>${esc(tx.kisa || (pos?fmt(dist(pos,x)):''))}</span></span>
-        ${x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:`<span class="d">${pos?fmt(dist(pos,x)):''}</span>`}
+        <span class="d">${pos && tx.kisa ? fmt(dist(pos,x)) : ''}</span>
       </button>`; }).join('');
 
     /* biraz uzakta */
@@ -334,7 +339,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     const ref = pos || center;
     $('far').innerHTML = far.map(x=>{ const tx=txt(x), done=v.has(x.id); return `
       <button class="stop ${x.id===selected?'sel':''} ${done?'visited':''}" data-id="${x.id}">
-        ${x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:`<span class="n">★</span>`}
+        ${th(x, done?'✓':'★')}
         <span class="t"><b>${esc(tx.ad)}</b><span>${esc(tx.kisa||'')}</span></span>
         <span class="d">${ref?fmt(dist(ref,x)):''}<br>${esc(ref && dist(ref,x)>3000?u.drive:u.walk)}</span>
       </button>`; }).join('');
@@ -343,8 +348,29 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     drawMap();
   }
 
+  /* ---------- Galata durak fotoğrafları (Vikipedi, bir kez çekilir, telefonda saklanır) ---------- */
+  const GPIC = { kule:['Galata Tower',/galata/i], kamondo:['Camondo Steps',/camondo/i], banka:['SALT Galata',/salt|ottoman bank/i],
+                 arap:['Arap Mosque Istanbul',/arap/i], mevlevi:['Galata Mevlevi',/mevlevi/i] };
+  async function loadGalataPics(){
+    let changed = false;
+    await Promise.all(GALATA.map(async s => {
+      const key = 'pic-'+s.id, hit = Store.get(key, '');
+      if(hit){ s.img = hit; return; }
+      const q = GPIC[s.id]; if(!q) return;
+      try{
+        const r = await fetch('https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&' + new URLSearchParams(
+          {action:'query', generator:'search', gsrsearch:q[0], gsrlimit:3, prop:'pageimages', piprop:'thumbnail', pithumbsize:900}));
+        const pages = ((await r.json()).query||{}).pages || [];
+        const p = pages.sort((a,b)=>a.index-b.index).find(x=>x.thumbnail && q[1].test(x.title));
+        if(p){ s.img = p.thumbnail.source; Store.set(key, s.img); changed = true; }
+      }catch(e){}
+    }));
+    if(changed || GALATA.some(s=>s.img)) App.refresh();
+  }
+
   /* ---------- Bağlantılar ---------- */
   function init(){
+    loadGalataPics();
     $('locate').onclick = locate;
     $('camBtn').onclick = openCamera;
     $('search').onsubmit = async e => {

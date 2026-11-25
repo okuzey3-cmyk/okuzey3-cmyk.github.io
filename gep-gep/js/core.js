@@ -45,7 +45,7 @@ const UI = {
     none:"Bu çevrede kayıtlı gezilecek yer bulunamadı. Galata örnek turu gösteriliyor.",
     netErr:"Yerler yüklenemedi. İnternetini kontrol et.",
     offlineRoute:"İnternet yok; kayıtlı rota açıldı.",
-    searchPh:"Şehir ya da semt ara (ör. Çankırı)", searchBtn:"Ara", notFound:"Bu yer bulunamadı",
+    searchPh:"Şehir ya da semt ara", searchBtn:"Ara", notFound:"Bu yer bulunamadı",
     sample:"Örnek tur: Galata", myPlace:"Bulunduğum yere dön",
     src:"Kaynak: Vikipedi", srcAi:"Kaynak: Vikipedi · anlatım Gemini",
     farTitle:"Biraz uzakta", farMeta:"görülmeye değer",
