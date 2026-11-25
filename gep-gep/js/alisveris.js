@@ -22,6 +22,17 @@ const Shop = (() => {
     }catch(e){ return null; }
   }
 
+  /* Model kodunu Google'da arar; teknik değerleri oradan toplar */
+  async function specs(r){
+    const dil = lang==='tr' ? 'Türkçe' : 'English';
+    const q = `Google'da ara: "${r.marka} ${r.model}" (${r.urun}). Bu modelin resmi teknik özelliklerini bul ve ${dil} yaz. SADECE şu JSON'u döndür:
+{"teknik":[{"ad":"Kapasite","deger":"örn. 8 kg"}], "bulundu": true/false}
+En fazla 9 satır; varsa şunları sırayla ver: kapasite, boyutlar (YxGxD cm), ağırlık, enerji sınıfı, program sayısı ve öne çıkan programlar, ses seviyesi, su ya da enerji tüketimi, devir/güç, renk ya da malzeme. Sadece aramada gerçekten bulduğun değerleri yaz, bulamadığını yazma, UYDURMA. Model bulunamazsa {"teknik":[],"bulundu":false} döndür.`;
+    const j = await AI.ask([{text:q}], {json:true, search:true, temperature:.1});
+    const a = (j.teknik||[]).filter(x=>x && x.ad && x.deger).slice(0,9);
+    return a.length ? a : null;
+  }
+
   async function analyse(b64, thumb){
     const dil = lang==='tr' ? 'Türkçe' : 'English';
     const prompt = `Bu fotoğrafta mağazada ya da evde bir ürünün etiketi, fiyat kartı veya ambalajı var. Ürün gıda, beyaz eşya, elektronik, giyim, kozmetik, temizlik ya da başka bir şey olabilir. ${dil} yaz. SADECE şu JSON'u döndür:
@@ -38,9 +49,13 @@ Etiketi sadece okuyup tekrar etme: özellikleri senin açıklamanı bekleyen bir
     const r = await AI.ask([{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}], {json:true});
     if(!r.urun) r.urun = [r.marka, r.model, r.kategori].filter(Boolean).join(' ');
     if(!r.urun) throw new Error('bad');
+    let tech = null;
+    if(r.model && r.marka && !/gıda|food|içecek|beverage/i.test(r.kategori||'')){
+      try{ tech = await specs(r); }catch(e){ tech = null; }
+    }
     const off = await openFoodFacts(String(r.barkod||'').replace(/\D/g,''));
-    const p = {...r, off: off ? {nutri:off.nutriscore_grade||'', nova:off.nova_group||'', name:off.product_name||''} : null,
-               img: thumb, lang, metin: [r.ozet, (r.ozellikler||[]).join('. '), r.icerik_notu].filter(Boolean).join(' ')};
+    const p = {...r, teknik: tech, off: off ? {nutri:off.nutriscore_grade||'', nova:off.nova_group||'', name:off.product_name||''} : null,
+               img: thumb, lang, metin: [r.ozet, (tech||[]).map(x=>x.ad+': '+x.deger).join('. '), (r.ozellikler||[]).join('. '), r.icerik_notu].filter(Boolean).join(' ')};
     p.ts = Date.now(); Journal.addProduct(p);
     current = {...p, _shot:'data:image/jpeg;base64,'+b64};
     return current;
@@ -62,6 +77,7 @@ Etiketi sadece okuyup tekrar etme: özellikleri senin açıklamanı bekleyen bir
       <p class="sum">${esc(p.ozet||'')}</p>
       ${(p.artilar?.length||p.eksiler?.length) ? `<div class="pros">${list(p.artilar,'p','+')}${list(p.eksiler,'m','−')}</div>` : ''}
       ${(p.ozellikler||[]).filter(Boolean).length?`<div class="sub"><h4>${esc(u.features)}</h4>${p.ozellikler.filter(Boolean).map(x=>{const i=x.indexOf(':');return i>0&&i<40?`<p class="feat"><b>${esc(x.slice(0,i))}</b> ${esc(x.slice(i+1).trim())}</p>`:`<p class="feat">${esc(x)}</p>`}).join('')}</div>`:''}
+      ${(p.teknik||[]).length?`<div class="sub"><h4>${esc(u.tech)}</h4><div class="spec">${p.teknik.map(x=>`<div><span>${esc(x.ad)}</span><b>${esc(x.deger)}</b></div>`).join('')}</div><p class="src">${esc(u.techSrc)}</p></div>`:''}
       ${chips.length?`<div class="chips">${chips.join('')}</div>`:''}
       ${p.icerik_notu?`<div class="sub"><h4>${esc(u.ingredients)}</h4><p>${esc(p.icerik_notu)}</p></div>`:''}
       ${p.kullanici_gorusu?`<div class="sub"><h4>${esc(u.users)}</h4><p>${esc(p.kullanici_gorusu)}</p></div>`:''}

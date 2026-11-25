@@ -79,7 +79,7 @@ const UI = {
     // Alışveriş
     shopEyebrow:"Alışveriş", shopTitle:"Etiketi oku", shopIntro:"Ürün etiketini ya da paketini kameraya tut; ne olduğunu, artısını eksisini söylesin.",
     shopScan:"Etiketi tara", shopHistTitle:"Son taradıkların", shopHistMeta:n=>`${n} ürün`,
-    pros:"Artıları", cons:"Dikkat edilecekler", ingredients:"İçerik notu", features:"Ürün özellikleri", price:"Fiyat yorumu", users:"Kullanıcıların genel görüşü",
+    pros:"Artıları", cons:"Dikkat edilecekler", ingredients:"İçerik notu", features:"Ürün özellikleri", tech:"Teknik bilgiler", techSrc:"Google aramasından derlendi; satın almadan önce satıcıdan doğrula.", price:"Fiyat yorumu", users:"Kullanıcıların genel görüşü",
     nutri:"Besin notu", nova:"İşlenmişlik", offSrc:"Kaynak: Open Food Facts", barcode:"Barkod",
     shopFine:"Yorumlar yapay zekanın genel bilgisidir; alerji ve sağlık konularında her zaman etiketin kendisine bak.",
     noProduct:"Ürünü tanıyamadım. Etiketi daha yakından ve net çekmeyi dene.",
@@ -146,7 +146,7 @@ const UI = {
     mag:m=>`Brightness ${m}`, compassErr:"No compass on this device; drag with your finger.",
     shopEyebrow:"Shopping", shopTitle:"Read the label", shopIntro:"Point the camera at a product label or package to hear what it is, with its pros and cons.",
     shopScan:"Scan a label", shopHistTitle:"Recently scanned", shopHistMeta:n=>`${n} products`,
-    pros:"Pros", cons:"Watch out for", ingredients:"Ingredients note", features:"Product features", price:"Price note", users:"What people generally say",
+    pros:"Pros", cons:"Watch out for", ingredients:"Ingredients note", features:"Product features", tech:"Specifications", techSrc:"Compiled from a Google search; verify with the seller before buying.", price:"Price note", users:"What people generally say",
     nutri:"Nutri-Score", nova:"Processing", offSrc:"Source: Open Food Facts", barcode:"Barcode",
     shopFine:"Comments are the AI's general knowledge; for allergies and health always check the label itself.",
     noProduct:"Couldn't recognise the product. Try a closer, sharper photo of the label.",
@@ -227,10 +227,11 @@ function playButton(id, text, extra=''){
 /* ---------- Gemini ---------- */
 const AI = {
   models: ['gemini-flash-latest', 'gemini-flash-lite-latest'],
-  async ask(parts, {json=false, temperature=0.4}={}){
+  async ask(parts, {json=false, temperature=0.4, search=false}={}){
     const key = getKey(); if(!key && !GEP.proxy) throw new Error('nokey');
     const body = {contents:[{parts}], generationConfig:{temperature}};
-    if(json) body.generationConfig.responseMimeType = 'application/json';
+    if(json && !search) body.generationConfig.responseMimeType = 'application/json';
+    if(search) body.tools = [{google_search:{}}];
     let last;
     for(const m of this.models){
       try{

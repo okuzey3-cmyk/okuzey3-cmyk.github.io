@@ -1,4 +1,4 @@
-/* v2 */
+/* v3 */
 /* Gep Gep — yapay zeka aracısı (Cloudflare Worker)
    Telefondaki uygulama bu adrese istek atar; Gemini anahtarı yalnızca burada, gizli kasada durur. */
 const ORIGINS = ['https://okuzey3-cmyk.github.io'];
@@ -40,7 +40,8 @@ export default {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY},
-      body: JSON.stringify({contents: body.contents, generationConfig: body.generationConfig || {}})
+      body: JSON.stringify({contents: body.contents, generationConfig: body.generationConfig || {},
+        ...(Array.isArray(body.tools) && body.tools.length && body.tools.every(t => t && Object.keys(t).join() === 'google_search') ? {tools: [{google_search: {}}]} : {})})
     });
     return new Response(await r.text(), {status: r.status, headers: {'Content-Type': 'application/json', ...cors(origin)}});
   }
