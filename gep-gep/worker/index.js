@@ -1,3 +1,4 @@
+/* v2 */
 /* Gep Gep — yapay zeka aracısı (Cloudflare Worker)
    Telefondaki uygulama bu adrese istek atar; Gemini anahtarı yalnızca burada, gizli kasada durur. */
 const ORIGINS = ['https://okuzey3-cmyk.github.io'];
