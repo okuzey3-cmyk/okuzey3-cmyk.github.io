@@ -135,7 +135,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 /* ---------- Harita ---------- */
 .mapcard{overflow:hidden;padding:0}
 #map{height:280px;background:var(--line)}
-.leaflet-container{font-family:var(--sans);background:var(--line)}
 .pin{width:28px;height:28px;border-radius:50%;background:var(--paper);border:2px solid var(--accent);color:var(--accent);
      display:grid;place-items:center;font-size:12px;font-weight:700;box-shadow:0 4px 10px -4px rgba(0,0,0,.4)}
 .pin.sel{background:var(--accent);color:#fff}
@@ -522,8 +521,7 @@ header{padding:14px 0 0}
 .stop.sel .th{box-shadow:0 0 0 2px var(--glow)}
 .ghost{background:rgba(255,255,255,.07);color:var(--ink)}
 .mapbtn{background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000))}
-.leaflet-tile{filter:invert(1) hue-rotate(188deg) brightness(.92) contrast(.88) saturate(.55)}
-.leaflet-container{background:#14111a}
+#map{background:#14100f}
 .pin{background:#1d1822;color:#fff;border-color:var(--glow)}
 .pin.sel{background:var(--accent)}
 
@@ -596,9 +594,11 @@ nav .ind{background:color-mix(in srgb,var(--accent) 28%,transparent);box-shadow:
 
 .now .credit{position:absolute;right:14px;bottom:12px;z-index:1;font-size:10.5px;color:rgba(255,255,255,.62);letter-spacing:.01em}
 .now .cap{bottom:30px}
-#map.keyed .leaflet-tile{filter:none}
-.leaflet-control-attribution{background:rgba(12,9,12,.6)!important;color:#9a93a5!important;font-size:10px}
-.leaflet-control-attribution a{color:#c9c2d3!important}
+.maplibregl-map{font-family:var(--sans)}
+.maplibregl-ctrl-attrib{background:rgba(12,9,12,.65)!important;color:#9a93a5!important;font-size:10px}
+.maplibregl-ctrl-attrib a{color:#c9c2d3!important}
+.maplibregl-ctrl-attrib-button{filter:invert(1);opacity:.6}
+.maplibregl-canvas{outline:none}
 .legal a{color:var(--glow)}
 
 .feat{margin:0 0 9px;font-size:14.5px;line-height:1.5;color:var(--ink2)}
