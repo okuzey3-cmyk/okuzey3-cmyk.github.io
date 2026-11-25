@@ -41,7 +41,7 @@ const Cam = {
     const thumb = t.toDataURL('image/jpeg', 0.6);
     this.onShot(b64, thumb)
       .then(r => this.showSheet(r))
-      .catch(() => this.showSheet({hata:true}));
+      .catch(e => this.showSheet({hata:true, why: !navigator.onLine ? 'offline' : (e && e.message==='rate' ? 'rate' : '')}));
   },
 
   showSheet(result){
@@ -60,7 +60,7 @@ const Cam = {
     $('sheet').innerHTML = `<div class="grab"></div>
       <div class="tag">${tr?'Başlamadan önce':'Before you start'}</div>
       <h2>${tr?'Fotoğrafın yapay zekâya gider':'Your photo goes to an AI'}</h2>
-      <p class="small">${tr?'Kameranla çektiğin fotoğraf, ne olduğunu anlatabilmek için Google Gemini’ye gönderilir. Bizde saklanmaz. Başkalarının yüzünü ya da kişisel bilgisini çekmemeye özen göster. Anlatımlar yanılabilir; alerji ve sağlıkta etikete bak.':'The photo you take is sent to Google Gemini so it can tell you what it is. We do not keep it. Please avoid photographing other people’s faces or personal information. Answers can be wrong; for allergies and health check the label.'}</p>
+      <p class="small">${tr?'Kameranla çektiğin fotoğraf, ne olduğunu anlatabilmek için Google Gemini’ye gönderilir. Bizde saklanmaz. Başkalarının yüzünü ya da kişisel bilgisini çekmemeye özen göster. Anlatımlar yapay zekâ ile üretilir ve yanılabilir; önemli bilgileri resmî kaynaklardan doğrula.':'The photo you take is sent to Google Gemini so it can tell you what it is. We do not keep it. Please avoid photographing other people’s faces or personal information. Answers are AI-generated and can be wrong; check important facts with official sources.'}</p>
       <p class="small"><a href="#" id="consentMore">${tr?'Gizlilik ve kaynaklar':'Privacy & sources'}</a></p>
       <button class="save" id="consentOk">${tr?'Anladım, devam et':'Got it, continue'}</button>
       <button class="again" id="consentNo">${tr?'Vazgeç':'Cancel'}</button>`;
@@ -91,6 +91,7 @@ const Cam = {
   },
 
   init(){
+    if(GEP.proxy) $('camKey').style.display = 'none';   /* herkese açık sürümde kişisel anahtar düğmesi gerekmez */
     $('camClose').onclick = () => this.close();
     $('shutter').onclick = () => this.shoot();
     $('camKey').onclick = () => this.keySheet(this.mode ? () => this.open(this.mode, {onShot:this.onShot, onResult:this.onResult, onShare:this.onShare}) : null);

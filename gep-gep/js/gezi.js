@@ -278,7 +278,7 @@ const Gezi = (() => {
         const dil = lang==='tr' ? 'Türkçe' : 'English';
         const prompt = `${near} Look at the photo and identify the main thing in it: a landmark, building, street, monument, sign, plant, animal or object.
 Write in ${dil}. Return ONLY JSON: {"ad": "short name", "kisa": "one short line", "metin": "about 90-120 words told like a friendly tour guide: what it is and its history or the most interesting facts", "emin": true/false}.
-If you cannot identify it confidently, set "emin": false, describe what you see and say honestly that you are not sure. Never invent dates or facts.`;
+If you cannot identify it confidently, set "emin": false, describe what you see and say honestly that you are not sure. Never invent dates or facts. Never identify real people from their faces; if people are in the photo, ignore them and talk only about the place or object.`;
         const r = await AI.ask([{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}], {json:true});
         if(!r.ad || !r.metin) throw new Error('bad');
         r._shot = 'data:image/jpeg;base64,' + b64;
@@ -287,7 +287,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       },
       onResult: r => {
         const u = T();
-        if(r.hata) return `<div class="tag">${esc(u.unsure)}</div><h2>${esc(u.unsure)}</h2><div class="story">${esc(u.aiErr)}</div>`;
+        if(r.hata) return `<div class="tag">${esc(u.errTitle)}</div><h2>${esc(u.errTitle)}</h2><div class="story">${esc(r.why==='offline'?u.aiOffline:r.why==='rate'?u.aiBusy:u.aiErr)}</div>`;
         return `<div class="tag">${esc(r.emin===false?u.unsure:u.seen)}</div><h2>${esc(r.ad)}</h2>
           ${r.kisa?`<div class="meta" style="color:var(--ink3);font-size:14px">${esc(r.kisa)}</div>`:''}
           ${playButton('cam', r.metin, Share.button('cam'))}<div class="story">${esc(r.metin)}</div>`;
