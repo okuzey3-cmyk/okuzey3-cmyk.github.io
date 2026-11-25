@@ -368,7 +368,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
   async function loadGalataPics(){
     let changed = false;
     await Promise.all(GALATA.map(async s => {
-      const key = 'pic2-'+s.id, hit = Store.get(key, null);
+      const key = 'pic3-'+s.id, hit = Store.get(key, null);
       if(hit){ s.img = hit.src; s.pic = hit; return; }
       const q = GPIC[s.id]; if(!q) return;
       try{
@@ -381,7 +381,12 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
           const m = ii.extmetadata||{}, lic = (m.LicenseShortName||{}).value||'';
           if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,''))) return false;
           return LIC_OK.test(lic) && !/map|plan|drawing|poster|engraving|painting|logo/i.test(p.title);
-        }).sort((x,y)=> licRank(x.ii.extmetadata.LicenseShortName.value)-licRank(y.ii.extmetadata.LicenseShortName.value) || x.p.index-y.p.index);
+        }).map(o=>{ const t=(o.p.title+' '+plain(((o.ii.extmetadata||{}).ImageDescription||{}).value)).toLowerCase();
+          o.sc = (/interior|inside|ceiling|stair|spiral|elevator|restaurant|museum|exhibit|detail|close-?up|window|clock|plaque|inscription|sign\b|fire|flag|bird|cat\b|dog\b|person|portrait|people|crowd|model|ticket|cafe|menu/.test(t) ? 10 : 0)
+               + (/exterior|view|skyline|panoram|sunset|dusk|from|tower of|kulesi|street|facade|mosque|camii|steps|merdiven|building|bina/.test(t) ? -3 : 0)
+               + (o.ii.width >= o.ii.height*1.15 ? -2 : (o.ii.width < o.ii.height*0.9 ? 1 : 0));
+          return o; })
+        .sort((x,y)=> x.sc-y.sc || licRank(x.ii.extmetadata.LicenseShortName.value)-licRank(y.ii.extmetadata.LicenseShortName.value) || x.p.index-y.p.index);
         const best = ok[0];
         if(best){
           const m = best.ii.extmetadata;
