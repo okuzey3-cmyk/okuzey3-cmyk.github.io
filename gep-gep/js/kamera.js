@@ -11,6 +11,7 @@ const Cam = {
 
   open(mode, {onShot, onResult, onShare}){
     if(!hasAI()) return this.keySheet(()=>this.open(mode, {onShot, onResult, onShare}));
+    if(!Store.get('ai-ok', false)) return this.consentSheet(()=>this.open(mode, {onShot, onResult, onShare}));
     this.mode = mode; this.onShot = onShot; this.onResult = onResult; this.onShare = onShare;
     const u = T();
     $('cam').className = 'cam open' + (mode==='shop' ? ' label' : '');
@@ -50,6 +51,23 @@ const Cam = {
     requestAnimationFrame(()=>$('sheet').classList.add('up'));
     $('again').onclick = () => { Voice.stop(); $('sheet').className = 'sheet'; $('cam').className = 'cam open' + (this.mode==='shop' ? ' label' : ''); };
     this.last = result;
+  },
+
+  consentSheet(then){
+    const tr = lang==='tr';
+    $('cam').className = 'cam open frozen';
+    $('shot').removeAttribute('src');
+    $('sheet').innerHTML = `<div class="grab"></div>
+      <div class="tag">${tr?'Başlamadan önce':'Before you start'}</div>
+      <h2>${tr?'Fotoğrafın yapay zekâya gider':'Your photo goes to an AI'}</h2>
+      <p class="small">${tr?'Kameranla çektiğin fotoğraf, ne olduğunu anlatabilmek için Google Gemini’ye gönderilir. Bizde saklanmaz. Başkalarının yüzünü ya da kişisel bilgisini çekmemeye özen göster. Anlatımlar yanılabilir; alerji ve sağlıkta etikete bak.':'The photo you take is sent to Google Gemini so it can tell you what it is. We do not keep it. Please avoid photographing other people’s faces or personal information. Answers can be wrong; for allergies and health check the label.'}</p>
+      <p class="small"><a href="#" id="consentMore">${tr?'Gizlilik ve kaynaklar':'Privacy & sources'}</a></p>
+      <button class="save" id="consentOk">${tr?'Anladım, devam et':'Got it, continue'}</button>
+      <button class="again" id="consentNo">${tr?'Vazgeç':'Cancel'}</button>`;
+    requestAnimationFrame(()=>$('sheet').classList.add('up'));
+    $('consentMore').onclick = e => { e.preventDefault(); openLegal(); };
+    $('consentNo').onclick = () => { $('sheet').className='sheet'; $('cam').className='cam'; App.refresh(); };
+    $('consentOk').onclick = () => { Store.set('ai-ok', true); $('sheet').className='sheet'; $('cam').className='cam'; if(then) setTimeout(then, 200); };
   },
 
   keySheet(then){

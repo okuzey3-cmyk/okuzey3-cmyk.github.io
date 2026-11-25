@@ -188,8 +188,15 @@ const Gezi = (() => {
     if(map || !window.L) return;
     const dark = matchMedia('(prefers-color-scheme: dark)').matches;
     map = L.map('map', {zoomControl:false, attributionControl:true});
-    L.tileLayer(`https://{s}.basemap.cartocdn.com/${dark?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`,
-      {maxZoom:19, subdomains:'abcd', attribution:'© OpenStreetMap · © CARTO'}).addTo(map);
+    const attr = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · © <a href="https://carto.com/attribution/" target="_blank" rel="noopener">CARTO</a>';
+    if(GEP.cartoKey){
+      $('map').classList.add('keyed');
+      L.tileLayer(`https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=${GEP.cartoKey}`,
+        {maxNativeZoom:18, maxZoom:19, attribution:attr}).addTo(map);
+    } else {
+      L.tileLayer(`https://{s}.basemap.cartocdn.com/${dark?'dark_all':'light_all'}/{z}/{x}/{y}{r}.png`,
+        {maxZoom:19, subdomains:'abcd', attribution:attr}).addTo(map);
+    }
     layer = L.layerGroup().addTo(map);
     map.setView([41.0256, 28.9741], 15);
   }
@@ -305,6 +312,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       <div class="media ${s.img?'':'ph'}" data-k="${esc(s.id)}">
         ${s.img?`<img class="pic ${fresh?'in':''}" src="${esc(s.img)}" alt="" onerror="this.parentNode.classList.add('ph');this.remove()">`:`<span class="mono">${esc(t.ad.charAt(0))}</span>`}
         <div class="shade"></div>
+        ${s.img?`<span class="credit">${esc(u.photoCredit)}</span>`:''}
         <div class="tag">${esc(label)}</div>
         ${idx>=0?`<div class="pos">${idx+1} / ${stops.length}</div>`:''}
         <div class="cap ${fresh?'in':''}"><h2>${esc(t.ad)}</h2>

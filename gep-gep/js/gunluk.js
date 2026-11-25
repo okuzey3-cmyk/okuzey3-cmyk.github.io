@@ -11,7 +11,9 @@ const LEGAL = {
      ['Kamera fotoğrafları','Kameranla bir şeye tuttuğunda çektiğin fotoğraf, ne olduğunu anlatabilmek için Google Gemini yapay zekâsına gönderilir. Fotoğraf bizde saklanmaz. Başkalarının yüzü ya da kişisel bilgisi görünen fotoğraf çekmemeye özen göster.'],
      ['Konum','Konumun yalnızca yakındaki duraklar ve gökyüzü hesabı için kullanılır. Haritadan şehir adı bulmak için koordinat Nominatim (OpenStreetMap) hizmetine gönderilir.'],
      ['Yapay zekâ uyarısı','Anlatımlar ve ürün yorumları yapay zekâ ile üretilir, yanılabilir. Alerji, sağlık ve güvenlik konularında her zaman ürünün etiketine ve resmî kaynaklara bak.'],
-     ['Kaynaklar','Yer bilgileri ve fotoğrafları: Wikipedia (CC BY-SA, yazarları ilgili sayfalarda). Harita: © OpenStreetMap katkıcıları, © CARTO. Barkodlu ürün bilgisi: Open Food Facts (ODbL). Gök cisimleri hesabı: Astronomy Engine. Yapay zekâ: Google Gemini.']
+     ['Kullanım koşulları','Gep Gep bilgilendirme amaçlıdır. Anlatımlar, ürün yorumları ve gökyüzü konumları yaklaşıktır; hatalı ya da eksik olabilir. Uygulamayı kullanırken trafik, güvenlik ve yasalar sana aittir; yürürken ekrana değil çevrene dikkat et. Alerji, sağlık, hukuk ve para konularında verilen bilgi tavsiye yerine geçmez. Uygulamayı kötüye kullanmaya çalışmamayı (aşırı istek göndermek gibi) kabul edersin; gerekirse erişim sınırlanabilir.'],
+     ['KVKK aydınlatma (6698)','Veri sorumlusu: Gep Gep geliştiricisi. İşlenen veriler: kamerayla çektiğin fotoğraf (yorumlanmak üzere, anlık), yaklaşık konum (yakındaki duraklar için), yazdığın arama metni. Amaç: istediğin anlatımı sana göstermek. Hukuki sebep: hizmetin sunulması ve ilk kullanımda verdiğin onay. Aktarım: fotoğraf Google’a (Gemini), arama Nominatim’e, ürün barkodu Open Food Facts’e gider; bu hizmetler yurt dışındadır. Günlük, rota ve ayarların yalnızca telefonunda durur; “Sil” ile kaldırırsın. KVKK madde 11 kapsamındaki haklarını kullanmak için iletişim bölümündeki adresi kullanabilirsin.'],
+     ['Kaynaklar','Yer bilgileri ve fotoğrafları: Wikipedia (CC BY-SA, yazarları ilgili sayfalarda). Harita: © OpenStreetMap katkıcıları, © CARTO. Barkodlu ürün bilgisi: Open Food Facts (ODbL). Gök cisimleri: Astronomy Engine (MIT). Harita aracı: Leaflet (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini.']
     ]},
   en:{btn:'Privacy & sources', sub:'Where your data goes, and what we use', title:'Privacy & sources', close:'Close',
     sec:[
@@ -19,7 +21,9 @@ const LEGAL = {
      ['Camera photos','When you point the camera at something, the photo is sent to Google Gemini so it can tell you what it is. We do not keep the photo. Please avoid photographing other people’s faces or personal information.'],
      ['Location','Your location is used only for nearby stops and the sky. To find a city name, coordinates are sent to Nominatim (OpenStreetMap).'],
      ['AI notice','Stories and product comments are AI-generated and can be wrong. For allergies, health and safety always check the product label and official sources.'],
-     ['Sources','Places and photos: Wikipedia (CC BY-SA, authors on each page). Map: © OpenStreetMap contributors, © CARTO. Barcode data: Open Food Facts (ODbL). Sky maths: Astronomy Engine. AI: Google Gemini.']
+     ['Terms of use','Gep Gep is for information only. Stories, product comments and sky positions are approximate and may be wrong or incomplete. You are responsible for your own safety and for obeying the law; watch your surroundings, not the screen, while walking. Information about allergies, health, law or money is not advice. Do not abuse the service (for example by sending excessive requests); access may be limited.'],
+     ['Privacy notice (KVKK/GDPR)','Controller: the Gep Gep developer. Data processed: the photo you take (instantly, to be interpreted), approximate location (for nearby stops), the search text you type. Purpose: to show you the story you asked for. Legal basis: providing the service and your consent on first use. Transfers: photos go to Google (Gemini), searches to Nominatim, product barcodes to Open Food Facts; these services are abroad. Your journal, routes and settings stay on your phone; “Delete” removes them. To exercise your data rights use the contact below.'],
+     ['Sources','Places and photos: Wikipedia (CC BY-SA, authors on each page). Map: © OpenStreetMap contributors, © CARTO. Barcode data: Open Food Facts (ODbL). Sky: Astronomy Engine (MIT). Map tool: Leaflet (BSD). Relay: Cloudflare. AI: Google Gemini.']
     ]}
 };
 function openLegal(){
@@ -27,6 +31,7 @@ function openLegal(){
   if(!el){ el = document.createElement('div'); el.id='legal'; el.className='legal'; document.body.appendChild(el); }
   el.innerHTML = `<div class="legal-in"><div class="grab"></div><h2>${esc(L.title)}</h2>`+
     L.sec.map(([h,t])=>`<h4>${esc(h)}</h4><p>${esc(t)}</p>`).join('')+
+    (GEP.contact?`<h4>${lang==='tr'?'İletişim':'Contact'}</h4><p><a href="mailto:${esc(GEP.contact)}">${esc(GEP.contact)}</a></p>`:'')+
     `<button class="again" id="legalX">${esc(L.close)}</button></div>`;
   requestAnimationFrame(()=>el.classList.add('on'));
   const close=()=>{ el.classList.remove('on'); };
