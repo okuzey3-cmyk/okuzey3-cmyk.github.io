@@ -18,7 +18,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="logo"><i></i>gep gep</div>
+    <div class="logo"><svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#c4552d"/><circle cx="256" cy="212" r="94" fill="none" stroke="#f4efe6" stroke-width="32"/><circle cx="256" cy="212" r="30" fill="#f4efe6"/><path d="M350 118V318C350 372 312 398 262 398C232 398 208 388 190 370" fill="none" stroke="#f4efe6" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/></svg>gep gep</div>
     <div class="lang"><button data-l="tr" class="on">TR</button><button data-l="en">EN</button></div>
   </header>
 
@@ -137,6 +137,8 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="ob" id="ob" hidden></div>
+
 <!-- Kamera katmanı (Gezi ve Alışveriş ortak kullanır) -->
 <div class="cam" id="cam">
   <video id="video" playsinline muted autoplay></video>
@@ -162,6 +164,7 @@
 <script src="js/gokyuzu.js"></script>
 <script src="js/alisveris.js"></script>
 <script src="js/gunluk.js"></script>
-<script>App.start();</script>
+<script src="js/acilis.js"></script>
+<script>App.start(); Onb.start();</script>
 </body>
 </html>
