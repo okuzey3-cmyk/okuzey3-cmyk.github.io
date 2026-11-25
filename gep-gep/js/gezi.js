@@ -81,6 +81,7 @@ const Gezi = (() => {
   function useGalata(){ stops=GALATA; far=[]; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; needFit=true; }
 
   async function loadNear(lat, lng, label){
+    if(!GEP.nearWeb){ useGalata(); manual=false; return App.refresh(); }   /* Vikipedi'den yakın yer çekme kapalı (ticari temizlik) */
     if(dist({lat,lng}, GALATA[0]) < 1500){ useGalata(); manual=false; return App.refresh(); }
     loadingNear=true; netErr=false; Voice.stop(); App.refresh();
     try{
@@ -275,7 +276,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('q').placeholder = u.searchPh; $('qBtn').textContent = u.searchBtn;
     $('camBtn').innerHTML = ICON.camera + esc(u.cam);
     $('mapBtn').innerHTML = ICON.nav + esc(u.mapBtn); $('mapBtn').href = mapsLink();
-    $('sample').textContent = mode==='galata' ? (pos && dist(pos,GALATA[0])>1500 ? u.myPlace : '') : u.sample;
+    $('sample').textContent = !GEP.nearWeb ? '' : (mode==='galata' ? (pos && dist(pos,GALATA[0])>1500 ? u.myPlace : '') : u.sample);
     $('resetRoute').textContent = u.resetRoute;
     const isSaved = Journal.routes().some(r=>r.key===routeKey()+'-'+lang);
     $('saveRoute').textContent = isSaved ? u.saved : u.saveRoute; $('saveRoute').classList.toggle('done', isSaved);
@@ -312,7 +313,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       <div class="media ${s.img?'':'ph'}" data-k="${esc(s.id)}">
         ${s.img?`<img class="pic ${fresh?'in':''}" src="${esc(s.img)}" alt="" onerror="this.parentNode.classList.add('ph');this.remove()">`:`<span class="mono">${esc(t.ad.charAt(0))}</span>`}
         <div class="shade"></div>
-        ${s.img?`<span class="credit">${esc(u.photoCredit)}</span>`:''}
+        ${s.img&&s.pic?`<a class="credit" href="${esc(s.pic.page)}" target="_blank" rel="noopener">${esc(u.photoBy)} ${esc(s.pic.by)} · ${esc(s.pic.lic)}</a>`:''}
         <div class="tag">${esc(label)}</div>
         ${idx>=0?`<div class="pos">${idx+1} / ${stops.length}</div>`:''}
         <div class="cap ${fresh?'in':''}"><h2>${esc(t.ad)}</h2>
@@ -357,21 +358,37 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     drawMap();
   }
 
-  /* ---------- Galata durak fotoğrafları (Vikipedi, bir kez çekilir, telefonda saklanır) ---------- */
-  const GPIC = { kule:['Galata Tower',/galata/i], kamondo:['Camondo Steps',/camondo/i], banka:['SALT Galata',/salt|ottoman bank/i],
-                 arap:['Arap Mosque Istanbul',/arap/i], mevlevi:['Galata Mevlevi',/mevlevi/i] };
+  /* ---------- Galata durak fotoğrafları: Wikimedia Commons, yalnızca serbest lisanslı olanlar ----------
+     Kabul: CC0, kamu malı, CC BY, CC BY-SA. Yazar ve lisans fotoğrafın üstünde gösterilir. */
+  const GPIC = { kule:['Galata Tower',/galata/i], kamondo:['Camondo Steps',/camondo|kamondo/i], banka:['SALT Galata Ottoman Bank',/salt|ottoman bank|osmanl/i],
+                 arap:['Arap Mosque Istanbul',/arap/i], mevlevi:['Galata Mevlevi Lodge',/mevlevi/i] };
+  const LIC_OK = /^(cc0|public domain|pd[- ]|pdm|cc by(-sa)? \d)/i;
+  const licRank = l => /^(cc0|public domain|pd|pdm)/i.test(l) ? 0 : /^cc by \d/i.test(l) ? 1 : 2;
+  const plain = h => { const d = document.createElement('div'); d.innerHTML = String(h||''); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
   async function loadGalataPics(){
     let changed = false;
     await Promise.all(GALATA.map(async s => {
-      const key = 'pic-'+s.id, hit = Store.get(key, '');
-      if(hit){ s.img = hit; return; }
+      const key = 'pic2-'+s.id, hit = Store.get(key, null);
+      if(hit){ s.img = hit.src; s.pic = hit; return; }
       const q = GPIC[s.id]; if(!q) return;
       try{
-        const r = await fetch('https://en.wikipedia.org/w/api.php?format=json&formatversion=2&origin=*&' + new URLSearchParams(
-          {action:'query', generator:'search', gsrsearch:q[0], gsrlimit:3, prop:'pageimages', piprop:'thumbnail', pithumbsize:900}));
+        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+          action:'query', format:'json', formatversion:'2', origin:'*', generator:'search', gsrnamespace:'6', gsrsearch:q[0]+' filetype:bitmap', gsrlimit:'20',
+          prop:'imageinfo', iiprop:'url|extmetadata|size|mime', iiurlwidth:'900'}));
         const pages = ((await r.json()).query||{}).pages || [];
-        const p = pages.sort((a,b)=>a.index-b.index).find(x=>x.thumbnail && q[1].test(x.title));
-        if(p){ s.img = p.thumbnail.source; Store.set(key, s.img); changed = true; }
+        const ok = pages.map(p=>({p, ii:(p.imageinfo||[])[0]})).filter(({p,ii})=>{
+          if(!ii || ii.mime!=='image/jpeg' || ii.width<1000 || !q[1].test(p.title)) return false;
+          const m = ii.extmetadata||{}, lic = (m.LicenseShortName||{}).value||'';
+          if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,''))) return false;
+          return LIC_OK.test(lic) && !/map|plan|drawing|poster|engraving|painting|logo/i.test(p.title);
+        }).sort((x,y)=> licRank(x.ii.extmetadata.LicenseShortName.value)-licRank(y.ii.extmetadata.LicenseShortName.value) || x.p.index-y.p.index);
+        const best = ok[0];
+        if(best){
+          const m = best.ii.extmetadata;
+          const pic = {src:best.ii.thumburl||best.ii.url, page:best.ii.descriptionurl, lic:m.LicenseShortName.value,
+                       by: plain((m.Artist||{}).value).slice(0,40) || 'Wikimedia Commons'};
+          s.img = pic.src; s.pic = pic; Store.set(key, pic); changed = true;
+        }
       }catch(e){}
     }));
     if(changed || GALATA.some(s=>s.img)) App.refresh();
@@ -379,6 +396,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
 
   /* ---------- Bağlantılar ---------- */
   function init(){
+    if(!GEP.nearWeb){ $('search').hidden = true; $('note').hidden = true; }
     loadGalataPics();
     $('locate').onclick = locate;
     $('camBtn').onclick = openCamera;

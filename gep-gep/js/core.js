@@ -48,7 +48,7 @@ const UI = {
     offlineRoute:"İnternet yok; kayıtlı rota açıldı.",
     searchPh:"Şehir ya da semt ara", searchBtn:"Ara", notFound:"Bu yer bulunamadı",
     sample:"Örnek tur: Galata", myPlace:"Bulunduğum yere dön",
-    photoCredit:"Fotoğraf: Wikipedia", src:"Kaynak: Vikipedi", srcAi:"Kaynak: Vikipedi · anlatım yapay zekâ (Gemini), hata içerebilir",
+    photoBy:"Foto:", src:"Kaynak: Vikipedi", srcAi:"Kaynak: Vikipedi · anlatım yapay zekâ (Gemini), hata içerebilir",
     farTitle:"Biraz uzakta", farMeta:"görülmeye değer",
     progress:(a,b)=>`${a}/${b} durak gezildi`, progressDone:"Rota tamamlandı",
     arrived:n=>`${n} durağına vardın`, routeDone:"Tebrikler, rotayı tamamladın!",
@@ -118,7 +118,7 @@ const UI = {
     offlineRoute:"You're offline; opened the saved route.",
     searchPh:"Search a city or area", searchBtn:"Go", notFound:"Place not found",
     sample:"Sample tour: Galata", myPlace:"Back to where I am",
-    photoCredit:"Photo: Wikipedia", src:"Source: Wikipedia", srcAi:"Source: Wikipedia · told by AI (Gemini), may contain errors",
+    photoBy:"Photo:", src:"Source: Wikipedia", srcAi:"Source: Wikipedia · told by AI (Gemini), may contain errors",
     farTitle:"A little further", farMeta:"worth the trip",
     progress:(a,b)=>`${a} of ${b} stops visited`, progressDone:"Route complete",
     arrived:n=>`You've reached ${n}`, routeDone:"Well done, you finished the route!",
@@ -304,7 +304,8 @@ const App = {
       const m = this.modules[this.tab]; m && m.play && m.play(b.dataset.play);
     });
     const on = GEP.features || ['gezi','sky','shop','log'];
-    document.body.dataset.only = on.length===1 ? on[0] : '';
+    if(on.length===1) document.body.dataset.only = on[0]; else delete document.body.dataset.only;
+    document.body.dataset.count = String(on.length);
     document.querySelectorAll('nav button').forEach(b=>{ b.hidden = !on.includes(b.dataset.tab); });
     Object.entries(this.modules).forEach(([k,m])=>{ if(on.includes(k) && m.init) m.init(); });
     const saved = Store.get('tab', on[0]);

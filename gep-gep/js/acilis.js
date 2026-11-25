@@ -34,6 +34,12 @@ const Onb = (() => {
       h3:'Before<br><em>you start.</em>', p3:'We’ll ask for two permissions, only when they help you.',
       perm:[['Location','To calculate the right sky. It never leaves your phone. You can say no, the app still works.'],['Motion sensor','To find the direction when you hold the phone up. iPhone will ask once.']], note:'None of your data leaves your phone.' });
   }
+  if((GEP.features||[]).join()==='gezi,sky'){
+    Object.assign(TXT.tr,{ h2:'Bir uygulama,<br><em>iki iş.</em>',
+      rows:[['Gezi','Tarihî bir yere kamerayı tut, hikâyesini dinle.'],['Gökyüzü','Telefonu göğe tut; Ay’ı, gezegenleri ve parlak yıldızları göstersin.']] });
+    Object.assign(TXT.en,{ h2:'One app,<br><em>two things.</em>',
+      rows:[['Walk','Point at a landmark and hear its story.'],['Sky','Hold your phone up to find the Moon, the planets and the brightest stars.']] });
+  }
   const I = {
     pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
     moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'

@@ -40,9 +40,30 @@ const LEGAL_SKY = {
     ['Terms of use','Gep Gep is for information only. Positions of sky objects are approximate. Never look at the Sun directly or through a camera. Watch your surroundings and the ground while stargazing.'],
     ['Sources','Sky position maths: Astronomy Engine (MIT licence). Star and planet facts are general astronomy knowledge; the descriptions are original to this app.']]}
 };
+const LEGAL_GS = {
+  tr:{title:'Gizlilik ve kaynaklar', close:'Kapat', sec:[
+    ['Verilerin nerede?','Günlüğün, ziyaret ettiğin duraklar ve ayarların yalnızca bu telefonda saklanır. Gep Gep’in hesap, kayıt ya da takip sistemi yoktur. Gökyüzü hesabı ve en yakın durağın bulunması telefonun içinde yapılır; konumun hiçbir sunucuya gönderilmez.'],
+    ['Kamera fotoğrafları','“Kameraya tut” dediğinde çekilen fotoğraf, ne olduğunu anlatabilmek için yapay zekâ servisine (Google Gemini) gönderilir. Fotoğraf bizde saklanmaz. Başkalarının yüzü ya da kişisel bilgisi görünen fotoğraf çekmemeye özen göster.'],
+    ['Konum ve sensörler','Konum, en yakın durağı ve doğru gökyüzünü bulmak için telefonunda kullanılır. Pusula ve eğim sensörleri telefonu göğe tuttuğunda yönü bulur. İzinleri istersen reddedebilirsin.'],
+    ['Yol tarifi','“Yol tarifi” düğmesine bastığında Google Haritalar açılır ve durak koordinatları oraya gider. Basmazsan hiçbir şey gönderilmez.'],
+    ['Yapay zekâ uyarısı','Kamerayla yapılan tanıma ve anlatımlar yapay zekâ ile üretilir, yanılabilir. Durak anlatımları bu uygulamaya özgü yazılmıştır, yine de önemli bilgileri resmî kaynaklardan doğrula.'],
+    ['Kullanım koşulları','Gep Gep bilgilendirme amaçlıdır. Anlatımlar, gök cisimlerinin konumları ve yol bilgileri yaklaşık değerlerdir. Güneş’e asla doğrudan ya da kamerayla bakma. Yürürken ekrana değil çevrene ve trafiğe dikkat et. Uygulamayı kötüye kullanmaya çalışmamayı (aşırı istek göndermek gibi) kabul edersin; gerekirse erişim sınırlanabilir.'],
+    ['KVKK aydınlatma (6698)','Veri sorumlusu: Gep Gep geliştiricisi. İşlenen veri: kamerayla çektiğin fotoğraf (yalnızca o anda yorumlanmak üzere). Amaç: istediğin anlatımı göstermek. Hukuki sebep: hizmetin sunulması ve ilk kullanımda verdiğin onay. Aktarım: fotoğraf Google’a (Gemini) gider, bu servis yurt dışındadır. Diğer her şey (konum, günlük, ayarlar) yalnızca telefonunda kalır; günlükteki “Sil” ile kaldırırsın. KVKK madde 11 haklarını kullanmak için iletişim bölümündeki adresi kullanabilirsin.'],
+    ['Kaynaklar','Durak fotoğrafları: Wikimedia Commons; yalnızca serbest lisanslı (CC0, kamu malı, CC BY, CC BY-SA) fotoğraflar gösterilir, yazar ve lisans her fotoğrafın üstünde yazar. Harita: © OpenStreetMap katkıcıları, © CARTO. Gök cisimleri hesabı: Astronomy Engine (MIT). Harita aracı: Leaflet (BSD). Aracı sunucu: Cloudflare. Yapay zekâ: Google Gemini. Durak ve gök cismi anlatımları bu uygulamaya özgü yazılmıştır.']]},
+  en:{title:'Privacy & sources', close:'Close', sec:[
+    ['Where is your data?','Your journal, visited stops and settings stay on this phone only. Gep Gep has no accounts, logs or tracking. The sky maths and finding the nearest stop happen on your phone; your location is never sent to a server.'],
+    ['Camera photos','When you point the camera, the photo is sent to an AI service (Google Gemini) so it can tell you what it is. We do not keep it. Please avoid photographing other people’s faces or personal information.'],
+    ['Location and sensors','Location is used on your phone to find the nearest stop and the right sky. The compass and tilt sensors find direction when you hold the phone up. You can decline any permission.'],
+    ['Directions','When you tap “Directions”, Google Maps opens and the stop coordinates go to it. If you do not tap, nothing is sent.'],
+    ['AI notice','Camera recognition and stories are AI-generated and can be wrong. The stop descriptions are written for this app, but verify important facts with official sources.'],
+    ['Terms of use','Gep Gep is for information only. Stories, sky positions and route details are approximate. Never look at the Sun directly or through a camera. Watch your surroundings and traffic while walking. Do not abuse the service (for example by sending excessive requests); access may be limited.'],
+    ['Privacy notice (KVKK/GDPR)','Controller: the Gep Gep developer. Data processed: the photo you take (only to be interpreted at that moment). Purpose: to show the story you asked for. Legal basis: providing the service and your consent on first use. Transfer: the photo goes to Google (Gemini), which is abroad. Everything else (location, journal, settings) stays on your phone; “Delete” in the journal removes it. To exercise your data rights use the contact below.'],
+    ['Sources','Stop photos: Wikimedia Commons; only freely licensed (CC0, public domain, CC BY, CC BY-SA) photos are shown, with author and licence on each photo. Map: © OpenStreetMap contributors, © CARTO. Sky maths: Astronomy Engine (MIT). Map tool: Leaflet (BSD). Relay: Cloudflare. AI: Google Gemini. Stop and sky descriptions are original to this app.']]}
+};
 function openLegal(){
-  const only = (GEP.features||[]).join() === 'sky';
-  const L = only ? LEGAL_SKY[lang] : LEGAL[lang]; let el = document.getElementById('legal');
+  const f = (GEP.features||[]).join();
+  const only = f === 'sky';
+  const L = only ? LEGAL_SKY[lang] : (f==='gezi,sky' ? LEGAL_GS[lang] : LEGAL[lang]); let el = document.getElementById('legal');
   if(!el){ el = document.createElement('div'); el.id='legal'; el.className='legal'; document.body.appendChild(el); }
   el.innerHTML = `<div class="legal-in"><div class="grab"></div><h2>${esc(L.title)}</h2>`+
     L.sec.map(([h,t])=>`<h4>${esc(h)}</h4><p>${esc(t)}</p>`).join('')+
