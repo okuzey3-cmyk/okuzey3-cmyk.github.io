@@ -256,6 +256,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
   }
 
   /* ---------- Çizim ---------- */
+  let lastKey = '';
   function render(){
     const u = T(), v = visited();
     $('place').textContent = placeName;
@@ -298,15 +299,15 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     else if(pos && !manual) label = u.nearest;
     else if(pos) label = fmt(d)+' '+u.away;
     else label = (firstLeft && firstLeft.id===s.id && doneN) ? u.next : (stops[0].id===s.id ? u.first : u.next);
-    const idx = stops.findIndex(x=>x.id===s.id);
+    const idx = stops.findIndex(x=>x.id===s.id), fresh = lastKey !== s.id; lastKey = s.id;
     $('now').className = 'card now' + (isHere && !isDone ? ' here' : '') + (isDone ? ' done' : '');
     $('now').innerHTML = `
       <div class="media ${s.img?'':'ph'}" data-k="${esc(s.id)}">
-        ${s.img?`<img class="pic" src="${esc(s.img)}" alt="" onerror="this.parentNode.classList.add('ph');this.remove()">`:`<span class="mono">${esc(t.ad.charAt(0))}</span>`}
+        ${s.img?`<img class="pic ${fresh?'in':''}" src="${esc(s.img)}" alt="" onerror="this.parentNode.classList.add('ph');this.remove()">`:`<span class="mono">${esc(t.ad.charAt(0))}</span>`}
         <div class="shade"></div>
         <div class="tag">${esc(label)}</div>
         ${idx>=0?`<div class="pos">${idx+1} / ${stops.length}</div>`:''}
-        <div class="cap"><h2>${esc(t.ad)}</h2>
+        <div class="cap ${fresh?'in':''}"><h2>${esc(t.ad)}</h2>
           <div class="meta">${esc(t.kisa)}${d!==null && !isHere && !s.far ? ' · '+fmt(d) : ''}</div></div>
       </div>
       <div class="row">

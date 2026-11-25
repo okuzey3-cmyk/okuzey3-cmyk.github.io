@@ -3,14 +3,13 @@
    ========================================================= */
 :root{
   --bg:#f4efe6; --paper:#fffcf7; --ink:#1c1916; --ink2:#5d564d; --ink3:#9a9185; --line:#e7dfd2;
-  --accent:#c4552d; --accent-soft:rgba(196,85,45,.10); --ok:#5f8a4a; --ok-soft:rgba(95,138,74,.12);
+  --accent:#c4552d; --accent-soft:color-mix(in srgb,var(--accent) 11%,transparent); --ok:#5f8a4a; --ok-soft:rgba(95,138,74,.12);
   --night:#0d1324; --night2:#16203a;
   --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{ --bg:#14120f; --paper:#1e1b17; --ink:#f3eee6; --ink2:#c2b9ab; --ink3:#857c70; --line:#2e2a24;
-         --accent-soft:rgba(196,85,45,.18); --ok-soft:rgba(95,138,74,.2); }
+  :root{ --bg:#14120f; --paper:#1e1b17; --ink:#f3eee6; --ink2:#c2b9ab; --ink3:#857c70; --line:#2e2a24; --ok-soft:rgba(95,138,74,.2); }
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
@@ -60,7 +59,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .now .pic{display:block;width:calc(100% + 40px);margin:-20px -20px 16px;height:180px;object-fit:cover;background:var(--line)}
 .row{display:flex;align-items:center;gap:14px;margin-top:18px}
 .play{width:58px;height:58px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none;
-      box-shadow:0 8px 20px -8px rgba(196,85,45,.7);transition:transform .15s}
+      box-shadow:0 8px 20px -8px var(--accent);transition:transform .15s}
 .play:active{transform:scale(.94)}
 .play svg{width:22px;height:22px}
 .row .lbl{flex:1}
@@ -321,7 +320,7 @@ header{padding:16px 0 0}
 /* Ana durak kartı */
 .now{padding:0;border-radius:var(--r-xl);box-shadow:var(--sh2);border:none}
 .now .media{position:relative;aspect-ratio:1/1.1;overflow:hidden;background:#2a2740;isolation:isolate}
-.now .media.ph{background:radial-gradient(120% 70% at 90% 0%,rgba(196,85,45,.6),transparent 62%),linear-gradient(165deg,#3b3453,#191828 72%)}
+.now .media.ph{background:radial-gradient(120% 70% at 90% 0%,color-mix(in srgb,var(--g2) 70%,transparent),transparent 62%),linear-gradient(165deg,var(--g1),color-mix(in srgb,var(--g1) 55%,#000) 78%)}
 .now .media.ph::before{content:"";position:absolute;right:-70px;top:-60px;width:260px;height:260px;border-radius:50%;
   border:34px solid rgba(255,255,255,.06);z-index:-1}
 .now .mono{position:absolute;left:22px;top:50%;transform:translateY(-62%);font-family:var(--serif);font-size:190px;font-weight:600;
@@ -335,7 +334,7 @@ header{padding:16px 0 0}
   background:rgba(22,18,14,.42);-webkit-backdrop-filter:blur(14px) saturate(1.4);backdrop-filter:blur(14px) saturate(1.4)}
 .now .tag{left:16px}
 .now .pos{right:16px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.85)}
-.now .tag::before{width:7px;height:7px;background:#ff8a5c}
+.now .tag::before{width:7px;height:7px;background:color-mix(in srgb,var(--accent) 55%,#fff)}
 .now.here .tag,.now.done .tag{color:#fff}
 .now.here .tag::before,.now.done .tag::before{background:#8fd16f}
 .now .cap{position:absolute;left:22px;right:22px;bottom:20px;z-index:1;color:#fff}
@@ -343,7 +342,7 @@ header{padding:16px 0 0}
 .now .cap .meta{font-size:15px;color:rgba(255,255,255,.82)}
 .now .row{margin-top:0;padding:16px 16px 4px;gap:10px}
 .now .play{width:auto;height:56px;flex:1;border-radius:99px;padding:0 24px;display:flex;align-items:center;justify-content:flex-start;gap:11px;
-  background:var(--accent);color:#fff;box-shadow:0 12px 26px -12px rgba(196,85,45,.85);font-size:16px}
+  background:var(--accent);color:#fff;box-shadow:0 12px 26px -12px var(--accent);font-size:16px}
 .now .play svg{width:20px;height:20px;flex:none}
 .now .play b{font-weight:650;letter-spacing:-.01em}
 .now .play span{font-size:14px;opacity:.82;margin-left:auto}
@@ -375,7 +374,7 @@ header{padding:16px 0 0}
 .stop:active{background:var(--accent-soft)}
 .stop.sel{background:color-mix(in srgb,var(--accent) 7%,var(--paper))}
 .th{position:relative;width:58px;height:58px;flex:none;border-radius:16px;overflow:hidden;display:grid;place-items:center;
-  background:linear-gradient(150deg,#3b3453,#201e32)}
+  background:linear-gradient(150deg,var(--g1),color-mix(in srgb,var(--g1) 60%,#000))}
 .th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .th b{position:relative;z-index:1;font-family:var(--serif);font-size:22px;font-weight:600;color:rgba(255,255,255,.9)}
 .th.has b{position:absolute;left:5px;top:5px;width:21px;height:21px;border-radius:50%;display:grid;place-items:center;
@@ -390,7 +389,7 @@ header{padding:16px 0 0}
 /* Harita */
 .mapcard{border-radius:var(--r-xl);box-shadow:var(--sh2);border:none}
 #map{height:300px}
-.mapbtn{height:56px;border-radius:99px;font-size:16px;margin-top:14px;box-shadow:0 12px 26px -14px rgba(196,85,45,.8)}
+.mapbtn{height:56px;border-radius:99px;font-size:16px;margin-top:14px;box-shadow:0 12px 26px -14px var(--accent)}
 .ghost{border-radius:99px;padding:14px;background:var(--paper);box-shadow:var(--sh1);border:none}
 .ghost.done{box-shadow:var(--sh1),inset 0 0 0 1.5px var(--ok)}
 
@@ -404,7 +403,7 @@ nav button svg{width:23px;height:23px}
 nav .gap{display:block}
 .fab{position:fixed;left:50%;bottom:calc(27px + env(safe-area-inset-bottom));z-index:25;width:66px;height:66px;margin-left:-33px;border-radius:50%;
   background:var(--accent);color:#fff;display:grid;place-items:center;
-  box-shadow:0 0 0 6px color-mix(in srgb,var(--bg) 92%,transparent),0 16px 30px -10px rgba(196,85,45,.9);transition:transform .18s cubic-bezier(.3,1.4,.5,1)}
+  box-shadow:0 0 0 6px color-mix(in srgb,var(--bg) 92%,transparent),0 16px 30px -10px var(--accent);transition:transform .18s cubic-bezier(.3,1.4,.5,1)}
 .fab svg{width:34px;height:34px}
 .fab:active{transform:scale(.92)}
 .toast{bottom:calc(112px + env(safe-area-inset-bottom))}
@@ -417,3 +416,54 @@ nav .gap{display:block}
 nav{background:color-mix(in srgb,var(--paper) 90%,transparent)}
 #camBtn[hidden]{display:none}
 .now .play{min-width:0}
+
+/* =========================================================
+   v3 — her sekmenin kendi rengi ve yumuşak geçişler
+   ========================================================= */
+@property --accent{syntax:"<color>";inherits:true;initial-value:#c4552d}
+@property --bg{syntax:"<color>";inherits:true;initial-value:#f4efe6}
+@property --g1{syntax:"<color>";inherits:true;initial-value:#3a2a3c}
+@property --g2{syntax:"<color>";inherits:true;initial-value:#c4552d}
+:root{ --g1:#3a2a3c; --g2:#e0703f; }
+/* Gezi: Haliç'te gün batımı — erik ve kiremit */
+body{--accent:#c4552d;--bg:#f6efe4;--g1:#3a2a3c;--g2:#e0703f;--glow:#f2b58a;
+     transition:--accent .6s ease,--bg .6s ease,--g1 .6s ease,--g2 .6s ease}
+/* Gökyüzü: gece mavisi — sakin, derin */
+body[data-tab="sky"]{--accent:#5b63e6;--bg:#eceef7;--g1:#10163a;--g2:#6a5be0;--glow:#aab3ff}
+/* Alışveriş: zümrüt — güven, taze */
+body[data-tab="shop"]{--accent:#1f8a65;--bg:#edf3ec;--g1:#10352c;--g2:#2fae80;--glow:#9fdcc0}
+/* Günlük: kehribar — sıcak, hatıra */
+body[data-tab="log"]{--accent:#b9791c;--bg:#f7efd9;--g1:#42290f;--g2:#d99a35;--glow:#f2cf8a}
+@media (prefers-color-scheme: dark){
+  body{--bg:#16110f}
+  body[data-tab="sky"]{--bg:#0d1021;--accent:#6a73f2}
+  body[data-tab="shop"]{--bg:#0c1512;--accent:#26a07a}
+  body[data-tab="log"]{--bg:#16110a;--accent:#c98f30}
+}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(90% 38% at 50% -8%,color-mix(in srgb,var(--glow) 55%,transparent),transparent 72%),
+             radial-gradient(70% 30% at 100% 100%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 70%)}
+@media (prefers-color-scheme: dark){ body::before{opacity:.5} }
+
+/* Sekme geçişi: yöne göre kayar */
+.view.on{animation:none}
+body[data-dir="r"] .view.on{animation:inR .5s cubic-bezier(.2,.8,.2,1) both}
+body[data-dir="l"] .view.on{animation:inL .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes inR{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+
+/* Menüde kayan seçim */
+nav .in{position:relative}
+nav .ind{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:22px;background:var(--accent-soft);
+  transition:transform .5s cubic-bezier(.3,1.2,.4,1),width .3s;pointer-events:none}
+nav button{position:relative;z-index:1}
+
+/* Kart değişiminde yalnızca yeni durakta animasyon */
+.now .pic{animation:none}
+.now .pic.in{animation:settle 1.1s cubic-bezier(.2,.7,.2,1) both}
+.now .cap.in{animation:capIn .7s .1s cubic-bezier(.2,.8,.2,1) both}
+@keyframes capIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ body{transition:none} .view.on{animation:none!important} nav .ind{transition:none} .now .cap.in,.now .pic.in{animation:none} }
+.cam-btn{background:var(--accent);color:#fff;border-radius:99px;box-shadow:0 14px 28px -14px var(--accent)}
+.cam-btn.big{border-radius:99px}
+.finder #qBtn{background:var(--ink)}
