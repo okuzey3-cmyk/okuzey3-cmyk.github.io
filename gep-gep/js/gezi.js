@@ -360,8 +360,9 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
 
   /* ---------- Galata durak fotoğrafları: Wikimedia Commons, yalnızca serbest lisanslı olanlar ----------
      Kabul: CC0, kamu malı, CC BY, CC BY-SA. Yazar ve lisans fotoğrafın üstünde gösterilir. */
-  const GPIC = { kule:['Galata Tower',/galata/i], kamondo:['Camondo Steps',/camondo|kamondo/i], banka:['SALT Galata Ottoman Bank',/salt|ottoman bank|osmanl/i],
-                 arap:['Arap Mosque Istanbul',/arap/i], mevlevi:['Galata Mevlevi Lodge',/mevlevi/i] };
+  /* Her durak için Commons'ta elle seçilmiş KATEGORİ(ler): konu kesin, arama tahmini yok. */
+  const GPIC = { kule:['Exterior of Galata Tower'], kamondo:['Camondo Stairs'], banka:['Ottoman Bank Museum','SALT (institution)'],
+                 arap:['Arap Mosque'], mevlevi:['Galata Mevlevihanesi'] };
   const LIC_OK = /^(cc0|public domain|pd[- ]|pdm|cc by(-sa)? \d)/i;
   const licRank = l => /^(cc0|public domain|pd|pdm)/i.test(l) ? 0 : /^cc by \d/i.test(l) ? 1 : 2;
   const plain = h => { const d = document.createElement('div'); d.innerHTML = String(h||''); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
@@ -372,17 +373,20 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       if(hit){ s.img = hit.src; s.pic = hit; return; }
       const q = GPIC[s.id]; if(!q) return;
       try{
-        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
-          action:'query', format:'json', formatversion:'2', origin:'*', generator:'search', gsrnamespace:'6', gsrsearch:q[0]+' filetype:bitmap', gsrlimit:'20',
-          prop:'imageinfo', iiprop:'url|extmetadata|size|mime', iiurlwidth:'900'}));
-        const pages = ((await r.json()).query||{}).pages || [];
+        const lists = await Promise.all(q.map(async cat => {
+          const r = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+            action:'query', format:'json', formatversion:'2', origin:'*', generator:'categorymembers', gcmtitle:'Category:'+cat, gcmtype:'file', gcmlimit:'60',
+            prop:'imageinfo', iiprop:'url|extmetadata|size|mime', iiurlwidth:'900'}));
+          return ((await r.json()).query||{}).pages || [];
+        }));
+        const pages = [].concat(...lists);
         const ok = pages.map(p=>({p, ii:(p.imageinfo||[])[0]})).filter(({p,ii})=>{
-          if(!ii || ii.mime!=='image/jpeg' || ii.width<1000 || !q[1].test(p.title)) return false;
+          if(!ii || ii.mime!=='image/jpeg' || ii.width<1400 || ii.width>ii.height*2.2 || ii.height>ii.width*1.9) return false;
           const m = ii.extmetadata||{}, lic = (m.LicenseShortName||{}).value||'';
           if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,''))) return false;
           return LIC_OK.test(lic) && !/map|plan|drawing|poster|engraving|painting|logo/i.test(p.title);
         }).map(o=>{ const t=(o.p.title+' '+plain(((o.ii.extmetadata||{}).ImageDescription||{}).value)).toLowerCase();
-          o.sc = (/interior|inside|ceiling|stair|spiral|elevator|restaurant|museum|exhibit|detail|close-?up|window|clock|plaque|inscription|sign\b|fire|flag|bird|cat\b|dog\b|person|portrait|people|crowd|model|ticket|cafe|menu/.test(t) ? 10 : 0)
+          o.sc = (/interior|inside|ceiling|spiral|elevator|restaurant|exhibit|detail|origami|library|shop|cemetery|grave|türbe|tomb|statue|night|snow|moon|close-?up|window|clock|plaque|inscription|sign\b|fire|flag|bird|cat\b|dog\b|person|portrait|people|crowd|model|ticket|cafe|menu/.test(t) ? 10 : 0)
                + (/exterior|view|skyline|panoram|sunset|dusk|from|tower of|kulesi|street|facade|mosque|camii|steps|merdiven|building|bina/.test(t) ? -3 : 0)
                + (o.ii.width >= o.ii.height*1.15 ? -2 : (o.ii.width < o.ii.height*0.9 ? 1 : 0));
           return o; })
