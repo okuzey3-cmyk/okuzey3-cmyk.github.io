@@ -600,3 +600,6 @@ nav .ind{background:color-mix(in srgb,var(--accent) 28%,transparent);box-shadow:
 .leaflet-control-attribution{background:rgba(12,9,12,.6)!important;color:#9a93a5!important;font-size:10px}
 .leaflet-control-attribution a{color:#c9c2d3!important}
 .legal a{color:var(--glow)}
+
+.feat{margin:0 0 9px;font-size:14.5px;line-height:1.5;color:var(--ink2)}
+.feat b{color:var(--ink);font-weight:650}

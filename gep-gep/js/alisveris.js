@@ -28,18 +28,19 @@ const Shop = (() => {
 {"urun": "ürünün adı (örn. Solo Bulaşık Makinesi)", "marka": "marka ya da boş", "model": "model kodu varsa aynen yaz, yoksa boş", "kategori": "kısa kategori",
  "fiyat": "etikette yazan fiyat bilgisi aynen (örn. Peşin 36.600 TL · 4 taksit 39.190 TL), yoksa boş",
  "barkod": "fotoğrafta okunabiliyorsa barkod rakamları, yoksa boş",
- "ozet": "ürünün ne olduğu ve genel değerlendirmesi, 2-3 cümle",
+ "ozet": "ürünün ne olduğunu ve kimlere uygun olduğunu sade, gündelik dille anlat, 2-3 cümle",
+ "ozellikler": ["etiketteki ya da modelin bilinen her önemli özelliği için '<özellik adı>: ne işe yaradığını bilmeyen birine anlatır gibi tek cümle' (en fazla 6 madde; örn. 'ExtraDry: yıkama sonrası kurutmayı güçlendirir, bardaklar daha az ıslak çıkar')"],
  "artilar": ["etikette yazan ya da genel olarak bilinen en fazla 3 güçlü yan"], "eksiler": ["en fazla 3 dikkat edilecek nokta; gıdada şeker, tuz, katkı, alerjen; cihazda enerji sınıfı, boyut, eksik özellik gibi"],
- "icerik_notu": "gıdada içerik, diğer ürünlerde etiketteki öne çıkan özellikler (program, kapasite, enerji sınıfı vb.) 1-2 cümle; yoksa boş",
+ "icerik_notu": "gıdada içerik notu 1-2 cümle; diğer ürünlerde boş bırak",
  "kullanici_gorusu": "bu ürün ya da model hakkında yaygın ve bilinen genel kullanıcı görüşü varsa 1-2 cümle; bilmiyorsan boş bırak, UYDURMA",
  "emin": true/false}
-Etiketteki yazıları dikkatle oku; eğilmiş, parlak ya da bulanık olsa da okunabilen her bilgiyi kullan. Piyasa fiyatı ya da indirim konusunda tahmin yürütme, sadece etikette yazanı aktar. Sağlık iddiasında bulunma. Ürünü tam tanıyamıyorsan bile etiketten okuduklarınla yanıt ver ve "emin": false yap.`;
+Etiketi sadece okuyup tekrar etme: özellikleri senin açıklamanı bekleyen bir müşteriye anlatır gibi, ne işe yaradığını ve günlük hayatta ne fark yarattığını açıkla. Marka ya da model hakkında kesin bilmediğin teknik değer (watt, litre, dB vb.) UYDURMA; bilmiyorsan söyleme. Etiketteki yazıları dikkatle oku; eğilmiş, parlak ya da bulanık olsa da okunabilen her bilgiyi kullan. Piyasa fiyatı ya da indirim konusunda tahmin yürütme, sadece etikette yazanı aktar. Sağlık iddiasında bulunma. Ürünü tam tanıyamıyorsan bile etiketten okuduklarınla yanıt ver ve "emin": false yap.`;
     const r = await AI.ask([{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}], {json:true});
     if(!r.urun) r.urun = [r.marka, r.model, r.kategori].filter(Boolean).join(' ');
     if(!r.urun) throw new Error('bad');
     const off = await openFoodFacts(String(r.barkod||'').replace(/\D/g,''));
     const p = {...r, off: off ? {nutri:off.nutriscore_grade||'', nova:off.nova_group||'', name:off.product_name||''} : null,
-               img: thumb, lang, metin: [r.ozet, r.icerik_notu].filter(Boolean).join(' ')};
+               img: thumb, lang, metin: [r.ozet, (r.ozellikler||[]).join('. '), r.icerik_notu].filter(Boolean).join(' ')};
     p.ts = Date.now(); Journal.addProduct(p);
     current = {...p, _shot:'data:image/jpeg;base64,'+b64};
     return current;
@@ -60,6 +61,7 @@ Etiketteki yazıları dikkatle oku; eğilmiş, parlak ya da bulanık olsa da oku
       ${withPlay ? playButton('shop-'+(p.ts||'now'), p.metin, Share.button('product')) : ''}
       <p class="sum">${esc(p.ozet||'')}</p>
       ${(p.artilar?.length||p.eksiler?.length) ? `<div class="pros">${list(p.artilar,'p','+')}${list(p.eksiler,'m','−')}</div>` : ''}
+      ${(p.ozellikler||[]).filter(Boolean).length?`<div class="sub"><h4>${esc(u.features)}</h4>${p.ozellikler.filter(Boolean).map(x=>{const i=x.indexOf(':');return i>0&&i<40?`<p class="feat"><b>${esc(x.slice(0,i))}</b> ${esc(x.slice(i+1).trim())}</p>`:`<p class="feat">${esc(x)}</p>`}).join('')}</div>`:''}
       ${chips.length?`<div class="chips">${chips.join('')}</div>`:''}
       ${p.icerik_notu?`<div class="sub"><h4>${esc(u.ingredients)}</h4><p>${esc(p.icerik_notu)}</p></div>`:''}
       ${p.kullanici_gorusu?`<div class="sub"><h4>${esc(u.users)}</h4><p>${esc(p.kullanici_gorusu)}</p></div>`:''}
