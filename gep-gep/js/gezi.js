@@ -127,7 +127,7 @@ const Gezi = (() => {
   /* ---------- Rehber anlatımı (Gemini; anahtar varsa) ---------- */
   const guideBusy = new Set();
   function ensureGuide(s){
-    const t = s[lang]; if(!t || t.rehber || guideBusy.has(s.id) || !getKey()) return;
+    const t = s[lang]; if(!t || t.rehber || guideBusy.has(s.id) || !hasAI()) return;
     const ck = 'g-'+lang+'-'+s.id, cached = Store.get(ck, null);
     if(cached){ t.metin = cached; t.rehber = true; return; }
     guideBusy.add(s.id);

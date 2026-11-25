@@ -1,0 +1,27 @@
+name: AI aracısını yayınla
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'gep-gep/worker/**'
+      - '.github/workflows/ai-worker.yml'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Anahtarlar eklenmemişse atla
+        if: ${{ env.CF_TOKEN == '' }}
+        run: echo "Cloudflare anahtarları henüz eklenmemiş, yayın atlandı."
+      - uses: cloudflare/wrangler-action@v3
+        if: ${{ env.CF_TOKEN != '' }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: gep-gep/worker
+          secrets: |
+            GEMINI_API_KEY
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

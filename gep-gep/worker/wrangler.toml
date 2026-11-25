@@ -1,0 +1,10 @@
+name = "gepgep-ai"
+main = "index.js"
+compatibility_date = "2025-01-01"
+
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 12
+  period = 60

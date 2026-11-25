@@ -25,6 +25,7 @@ const Store = {
 
 let lang = Store.get('lang', (navigator.language||'tr').toLowerCase().startsWith('tr') ? 'tr' : 'en');
 const getKey = () => Store.get('key', '');
+const hasAI = () => !!getKey() || !!GEP.proxy;
 
 /* ---------- Metinler ---------- */
 const UI = {
@@ -227,14 +228,17 @@ function playButton(id, text, extra=''){
 const AI = {
   models: ['gemini-flash-latest', 'gemini-flash-lite-latest'],
   async ask(parts, {json=false, temperature=0.4}={}){
-    const key = getKey(); if(!key) throw new Error('nokey');
+    const key = getKey(); if(!key && !GEP.proxy) throw new Error('nokey');
     const body = {contents:[{parts}], generationConfig:{temperature}};
     if(json) body.generationConfig.responseMimeType = 'application/json';
     let last;
     for(const m of this.models){
       try{
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`,
-          {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+        const r = key
+          ? await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`,
+              {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)})
+          : await fetch(GEP.proxy, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({model:m, body})});
+        if(r.status===429 && !key){ last = new Error('rate'); break; }
         if(!r.ok){ last = new Error('http '+r.status); continue; }
         const j = await r.json();
         const txt = (j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||'').join('').trim();

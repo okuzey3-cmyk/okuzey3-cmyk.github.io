@@ -10,7 +10,7 @@ const Cam = {
   onResult: null,      // sonucu alttaki kartta çizer
 
   open(mode, {onShot, onResult, onShare}){
-    if(!getKey()) return this.keySheet(()=>this.open(mode, {onShot, onResult, onShare}));
+    if(!hasAI()) return this.keySheet(()=>this.open(mode, {onShot, onResult, onShare}));
     this.mode = mode; this.onShot = onShot; this.onResult = onResult; this.onShare = onShare;
     const u = T();
     $('cam').className = 'cam open' + (mode==='shop' ? ' label' : '');
