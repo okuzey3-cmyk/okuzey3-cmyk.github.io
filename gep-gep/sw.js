@@ -1,7 +1,7 @@
 /* Gep Gep — çevrimdışı önbellek
    Uygulama dosyaları: önce ağ, yoksa önbellek.
    Vikipedi fotoğrafları ve harita karoları: önce önbellek (internetsiz rotalar için). */
-const C = 'gepgep-v26';
+const C = 'gepgep-v28';
 const CORE = ['./', 'index.html', 'manifest.json', 'icon.svg', 'icon-180.png', 'css/app.css',
   'js/config.js', 'js/galata.js', 'js/core.js', 'js/paylas.js', 'js/kamera.js', 'js/gezi.js', 'js/gokyuzu.js', 'js/alisveris.js', 'js/gunluk.js', 'js/acilis.js', 'js/tema.js', 'icon-512.png',
   'vendor/maplibre-gl.js', 'vendor/maplibre-gl.css', 'vendor/astronomy.browser.min.js'];

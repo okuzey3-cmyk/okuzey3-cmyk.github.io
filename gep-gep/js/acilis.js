@@ -35,10 +35,20 @@ const Onb = (() => {
       perm:[['Location','To calculate the right sky. It never leaves your phone. You can say no, the app still works.'],['Motion sensor','To find the direction when you hold the phone up. iPhone will ask once.']], note:'None of your data leaves your phone.' });
   }
   if((GEP.features||[]).join()==='gezi,sky'){
-    Object.assign(TXT.tr,{ h2:'Bir uygulama,<br><em>iki iş.</em>',
-      rows:[['Gezi','Tarihî bir yere kamerayı tut, hikâyesini dinle.'],['Gökyüzü','Telefonu göğe tut; Ay’ı, gezegenleri ve parlak yıldızları göstersin.']] });
-    Object.assign(TXT.en,{ h2:'One app,<br><em>two things.</em>',
-      rows:[['Walk','Point at a landmark and hear its story.'],['Sky','Hold your phone up to find the Moon, the planets and the brightest stars.']] });
+    Object.assign(TXT.tr,{ h1:'Gezerken cebindeki<br><em>rehber.</em>', p1:'Bir yere kamerayı tut, hikâyesini dinle. Göğe tut, yıldızları tanı.',
+      h2:'Bir uygulama,<br><em>iki iş.</em>',
+      rows:[['Gezi','Tarihî bir yere kamerayı tut, hikâyesini dinle.'],['Gökyüzü','Telefonu göğe tut; Ay’ı, gezegenleri ve parlak yıldızları göstersin.']],
+      p3:'Üç izin isteyeceğiz. Hepsi yalnızca işine yaradığında.',
+      perm:[['Kamera','Sen “Kameraya tut” dediğinde açılır. Çektiğin kare, ne olduğunu anlamak için yapay zekaya gönderilir.'],
+            ['Konum','Yakındaki durakları ve doğru gökyüzünü göstermek için. Yalnızca yol tarifi istediğinde Google Haritalar’a iletilir. İstemezsen reddet, uygulama yine çalışır.'],
+            ['Hareket sensörü','Telefonu göğe tuttuğunda yönü bulmak için. iPhone bir kez soracak.']] });
+    Object.assign(TXT.en,{ h1:'The guide<br><em>in your pocket.</em>', p1:'Point at a place and hear its story. Point at the sky and get to know the stars.',
+      h2:'One app,<br><em>two things.</em>',
+      rows:[['Walk','Point at a landmark and hear its story.'],['Sky','Hold your phone up to find the Moon, the planets and the brightest stars.']],
+      p3:'We’ll ask for three permissions, only when they help you.',
+      perm:[['Camera','Opens only when you tap “Point the camera”. The frame you take is sent to an AI to work out what it is.'],
+            ['Location','To show nearby stops and the right sky. Only passed to Google Maps if you ask for directions. You can say no, the app still works.'],
+            ['Motion sensor','To find the direction when you hold the phone up. iPhone will ask once.']] });
   }
   const I = {
     pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
@@ -49,7 +59,7 @@ const Onb = (() => {
 
   function row(ic, b, s, i){ return `<div class="ob-row rise" style="--i:${i}"><div class="ob-ic">${ic}</div><div><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`; }
   function build(){
-    const t = TXT[lang] || TXT.tr, icons = [I.moon, I.moon, I.moon].map((x,i)=>(GEP.features||[]).join()==='sky' ? x : [I.pin, I.moon, ICON.tag][i]), pic = (GEP.features||[]).join()==='sky' ? [ICON.nav, ICON.nav] : [ICON.camera, ICON.nav];
+    const t = TXT[lang] || TXT.tr, icons = [I.moon, I.moon, I.moon].map((x,i)=>(GEP.features||[]).join()==='sky' ? x : [I.pin, I.moon, ICON.tag][i]), pic = (GEP.features||[]).join()==='sky' ? [ICON.nav, ICON.nav] : [ICON.camera, ICON.nav, ICON.compass||ICON.nav];
     el.innerHTML = `
       <div class="ob-top"><div class="ob-lang"><button data-l="tr">TR</button><button data-l="en">EN</button></div><button class="ob-skip" id="obSkip">${esc(t.skip)}</button></div>
       <div class="ob-track" id="obTrack">
