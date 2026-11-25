@@ -26,8 +26,23 @@ const LEGAL = {
      ['Sources','Places and photos: Wikipedia (CC BY-SA, authors on each page). Map: © OpenStreetMap contributors, © CARTO. Barcode data: Open Food Facts (ODbL). Sky: Astronomy Engine (MIT). Map tool: Leaflet (BSD). Relay: Cloudflare. AI: Google Gemini.']
     ]}
 };
+const LEGAL_SKY = {
+  tr:{title:'Gizlilik ve kaynaklar', close:'Kapat', sec:[
+    ['Verilerin nerede?','Gökyüzü hesabı tamamen telefonunda yapılır. Konumun ve sensör bilgilerin telefondan dışarı çıkmaz, hiçbir sunucuya gönderilmez. Hesap, kayıt ya da takip yoktur.'],
+    ['Konum','Doğru gökyüzünü hesaplamak için telefonunun konumu kullanılır. İstemezsen reddedebilirsin; uygulama İstanbul’a göre çalışmaya devam eder.'],
+    ['Hareket ve yön sensörleri','Telefonu göğe tuttuğunda pusula ve eğim sensörleri o yönü bulmak için kullanılır. iPhone’da bunun için izin sorulur.'],
+    ['Kullanım koşulları','Gep Gep bilgilendirme amaçlıdır. Gök cisimlerinin konumları yaklaşık değerlerdir. Güneş’e asla doğrudan ya da kamerayla bakma. Geceleri gökyüzüne bakarken çevrene, zemine ve trafiğe dikkat et.'],
+    ['Kaynaklar','Gök cisimlerinin konum hesabı: Astronomy Engine (MIT lisansı). Yıldız ve gezegen bilgileri genel astronomi bilgisidir; açıklama metinleri bu uygulamaya özgü yazılmıştır.']]},
+  en:{title:'Privacy & sources', close:'Close', sec:[
+    ['Where is your data?','The sky is calculated entirely on your phone. Your location and sensor data never leave it and are never sent to any server. There are no accounts, logs or tracking.'],
+    ['Location','Your phone’s location is used to calculate the right sky. You can decline; the app keeps working for Istanbul.'],
+    ['Motion and orientation sensors','When you hold your phone up, the compass and tilt sensors find that direction. On iPhone you are asked for permission.'],
+    ['Terms of use','Gep Gep is for information only. Positions of sky objects are approximate. Never look at the Sun directly or through a camera. Watch your surroundings and the ground while stargazing.'],
+    ['Sources','Sky position maths: Astronomy Engine (MIT licence). Star and planet facts are general astronomy knowledge; the descriptions are original to this app.']]}
+};
 function openLegal(){
-  const L = LEGAL[lang]; let el = document.getElementById('legal');
+  const only = (GEP.features||[]).join() === 'sky';
+  const L = only ? LEGAL_SKY[lang] : LEGAL[lang]; let el = document.getElementById('legal');
   if(!el){ el = document.createElement('div'); el.id='legal'; el.className='legal'; document.body.appendChild(el); }
   el.innerHTML = `<div class="legal-in"><div class="grab"></div><h2>${esc(L.title)}</h2>`+
     L.sec.map(([h,t])=>`<h4>${esc(h)}</h4><p>${esc(t)}</p>`).join('')+

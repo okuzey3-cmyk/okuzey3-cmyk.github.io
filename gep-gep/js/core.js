@@ -279,7 +279,7 @@ const App = {
     const m = this.modules[this.tab]; m && m.render && m.render();
   },
   show(tab){
-    if(tab===this.tab) return;
+    if(tab===this.tab || !(GEP.features||[tab]).includes(tab)) return;
     Voice.stop();
     const prev = this.modules[this.tab]; prev && prev.leave && prev.leave();
     this.tab = tab; Store.set('tab', tab);
@@ -303,9 +303,12 @@ const App = {
       const b = e.target.closest('[data-play]'); if(!b) return;
       const m = this.modules[this.tab]; m && m.play && m.play(b.dataset.play);
     });
-    Object.values(this.modules).forEach(m=>m.init && m.init());
-    const saved = Store.get('tab', 'gezi');
-    const first = this.modules[saved] ? saved : 'gezi';
+    const on = GEP.features || ['gezi','sky','shop','log'];
+    document.body.dataset.only = on.length===1 ? on[0] : '';
+    document.querySelectorAll('nav button').forEach(b=>{ b.hidden = !on.includes(b.dataset.tab); });
+    Object.entries(this.modules).forEach(([k,m])=>{ if(on.includes(k) && m.init) m.init(); });
+    const saved = Store.get('tab', on[0]);
+    const first = (on.includes(saved) && this.modules[saved]) ? saved : on[0];
     this.tab = null; this.show(first);
     if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
   }

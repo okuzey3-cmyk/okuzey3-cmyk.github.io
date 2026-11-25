@@ -24,6 +24,16 @@ const Onb = (() => {
             ['Location','To show nearby stops and the right sky. You can say no, the app still works.']],
       note:'Your phone will ask the first time you use each one.' }
   };
+  if((GEP.features||[]).join()==='sky'){
+    Object.assign(TXT.tr,{ p1:'Telefonu göğe tut, gökyüzünü tanı.', h2:'Gökyüzünü<br><em>cebinde taşı.</em>',
+      rows:[['Ay ve gezegenler','Şu an nerede olduklarını yönüyle birlikte gör.'],['Parlak yıldızlar','Birine dokun, hikâyesini dinle.'],['İnternet gerekmez','Hesaplar telefonunun içinde yapılır.']],
+      h3:'Başlamadan<br><em>önce.</em>', p3:'İki izin isteyeceğiz. İkisi de yalnızca işine yaradığında.',
+      perm:[['Konum','Doğru gökyüzünü hesaplamak için. Dışarı gönderilmez. İstemezsen reddet, uygulama yine çalışır.'],['Hareket sensörü','Telefonu göğe tuttuğunda yönü bulmak için. iPhone bir kez soracak.']], note:'Hiçbir verin telefonundan çıkmaz.' });
+    Object.assign(TXT.en,{ p1:'Hold your phone up and get to know the sky.', h2:'Carry the sky<br><em>in your pocket.</em>',
+      rows:[['Moon and planets','See where they are right now, with direction.'],['Bright stars','Tap one to hear its story.'],['No internet needed','All maths happens inside your phone.']],
+      h3:'Before<br><em>you start.</em>', p3:'We’ll ask for two permissions, only when they help you.',
+      perm:[['Location','To calculate the right sky. It never leaves your phone. You can say no, the app still works.'],['Motion sensor','To find the direction when you hold the phone up. iPhone will ask once.']], note:'None of your data leaves your phone.' });
+  }
   const I = {
     pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
     moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'
@@ -33,7 +43,7 @@ const Onb = (() => {
 
   function row(ic, b, s, i){ return `<div class="ob-row rise" style="--i:${i}"><div class="ob-ic">${ic}</div><div><b>${esc(b)}</b><span>${esc(s)}</span></div></div>`; }
   function build(){
-    const t = TXT[lang] || TXT.tr, icons = [I.pin, I.moon, ICON.tag], pic = [ICON.camera, ICON.nav];
+    const t = TXT[lang] || TXT.tr, icons = [I.moon, I.moon, I.moon].map((x,i)=>(GEP.features||[]).join()==='sky' ? x : [I.pin, I.moon, ICON.tag][i]), pic = (GEP.features||[]).join()==='sky' ? [ICON.nav, ICON.nav] : [ICON.camera, ICON.nav];
     el.innerHTML = `
       <div class="ob-top"><div class="ob-lang"><button data-l="tr">TR</button><button data-l="en">EN</button></div><button class="ob-skip" id="obSkip">${esc(t.skip)}</button></div>
       <div class="ob-track" id="obTrack">

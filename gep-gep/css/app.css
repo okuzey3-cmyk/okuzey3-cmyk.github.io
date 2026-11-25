@@ -609,3 +609,24 @@ nav .ind{background:color-mix(in srgb,var(--accent) 28%,transparent);box-shadow:
 .spec div:last-child{border-bottom:none}
 .spec span{color:var(--ink3)}
 .spec b{font-weight:600;text-align:right;color:var(--ink)}
+
+/* Tek özellik modu: alt menü ve kamera düğmesi gizli */
+body[data-only] nav,body[data-only] .fab{display:none}
+body[data-only]{padding-bottom:calc(36px + env(safe-area-inset-bottom))}
+.foot{text-align:center;padding:8px 0 calc(24px + env(safe-area-inset-bottom))}
+.foot button{font-size:13px;color:var(--ink3);text-decoration:underline;text-underline-offset:3px}
+body:not([data-only]) .foot{display:none}
+
+/* Gökyüzü bilgi kartı (Gezi kartından ayrı) */
+.skyinfo{margin:14px 0 0;padding:24px 22px 24px;border-radius:30px;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.035));box-shadow:0 0 0 1px rgba(255,255,255,.08) inset}
+.skyinfo .tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--glow);
+  background:color-mix(in srgb,var(--accent) 16%,transparent);padding:6px 12px;border-radius:99px}
+.skyinfo .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--glow)}
+.skyinfo h2{font-family:var(--serif);font-size:38px;font-weight:600;letter-spacing:-.025em;line-height:1.1;margin:14px 0 6px}
+.skyinfo .meta{font-size:15px;color:var(--ink2)}
+.skyinfo .row{margin-top:20px;gap:14px}
+.skyinfo .play{width:62px;height:62px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#000));box-shadow:0 14px 30px -10px var(--accent)}
+.skyinfo .share{width:50px;height:50px;border:none;background:rgba(255,255,255,.09);color:var(--ink)}
+.skyinfo .story{margin-top:18px;font-size:18px;line-height:1.7;color:var(--ink)}
+.skyhint{background:rgba(7,9,24,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);width:max-content;max-width:88%;margin:0 auto;border-radius:99px;padding:6px 14px;left:50%!important;right:auto!important;transform:translateX(-50%)}

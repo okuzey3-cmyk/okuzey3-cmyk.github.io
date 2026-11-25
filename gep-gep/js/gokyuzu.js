@@ -246,12 +246,12 @@ const Sky = (() => {
     const el = $('skyNow');
     if(!o){
       const best = visible().filter(x=>x.type!=='sun')[0];
-      el.className = 'card now';
+      el.className = 'card skyinfo';
       el.innerHTML = `<div class="tag">${esc(u.skyAim)}</div>` + (best ? `<h2>${esc((best[lang]||best.tr).ad)}</h2>
         <div class="meta">${esc(dirName(best.az))} · ${Math.round(best.alt)}° ${esc(u.up)}</div>` : `<div class="meta" style="margin-top:8px">${esc(u.skyNone)}</div>`);
       return;
     }
-    el.className = 'card now';
+    el.className = 'card skyinfo';
     el.innerHTML = cardFor(o);
   }
   function renderList(){
