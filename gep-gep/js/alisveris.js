@@ -24,15 +24,18 @@ const Shop = (() => {
 
   async function analyse(b64, thumb){
     const dil = lang==='tr' ? 'Türkçe' : 'English';
-    const prompt = `Bu fotoğrafta bir ürün etiketi ya da ambalajı var. ${dil} yaz. SADECE şu JSON'u döndür:
-{"urun": "ürünün adı", "marka": "marka ya da boş", "kategori": "kısa kategori", "barkod": "fotoğrafta okunabiliyorsa barkod rakamları, yoksa boş",
+    const prompt = `Bu fotoğrafta mağazada ya da evde bir ürünün etiketi, fiyat kartı veya ambalajı var. Ürün gıda, beyaz eşya, elektronik, giyim, kozmetik, temizlik ya da başka bir şey olabilir. ${dil} yaz. SADECE şu JSON'u döndür:
+{"urun": "ürünün adı (örn. Solo Bulaşık Makinesi)", "marka": "marka ya da boş", "model": "model kodu varsa aynen yaz, yoksa boş", "kategori": "kısa kategori",
+ "fiyat": "etikette yazan fiyat bilgisi aynen (örn. Peşin 36.600 TL · 4 taksit 39.190 TL), yoksa boş",
+ "barkod": "fotoğrafta okunabiliyorsa barkod rakamları, yoksa boş",
  "ozet": "ürünün ne olduğu ve genel değerlendirmesi, 2-3 cümle",
- "artilar": ["en fazla 3 kısa madde"], "eksiler": ["en fazla 3 kısa madde; şeker, tuz, katkı maddesi, alerjen gibi dikkat edilecekler"],
- "icerik_notu": "etiketteki içerikten öne çıkan 1-2 cümle; okunamıyorsa boş",
- "kullanici_gorusu": "bu ürün hakkında yaygın ve bilinen genel kullanıcı görüşü varsa 1-2 cümle; bilmiyorsan boş bırak, UYDURMA",
+ "artilar": ["etikette yazan ya da genel olarak bilinen en fazla 3 güçlü yan"], "eksiler": ["en fazla 3 dikkat edilecek nokta; gıdada şeker, tuz, katkı, alerjen; cihazda enerji sınıfı, boyut, eksik özellik gibi"],
+ "icerik_notu": "gıdada içerik, diğer ürünlerde etiketteki öne çıkan özellikler (program, kapasite, enerji sınıfı vb.) 1-2 cümle; yoksa boş",
+ "kullanici_gorusu": "bu ürün ya da model hakkında yaygın ve bilinen genel kullanıcı görüşü varsa 1-2 cümle; bilmiyorsan boş bırak, UYDURMA",
  "emin": true/false}
-Ürünü tanıyamıyorsan "emin": false yap ve gördüğünü dürüstçe anlat. Sağlık iddiasında bulunma, sadece etikette yazanı ve genel bilgiyi kullan.`;
+Etiketteki yazıları dikkatle oku; eğilmiş, parlak ya da bulanık olsa da okunabilen her bilgiyi kullan. Piyasa fiyatı ya da indirim konusunda tahmin yürütme, sadece etikette yazanı aktar. Sağlık iddiasında bulunma. Ürünü tam tanıyamıyorsan bile etiketten okuduklarınla yanıt ver ve "emin": false yap.`;
     const r = await AI.ask([{text:prompt},{inline_data:{mime_type:'image/jpeg',data:b64}}], {json:true});
+    if(!r.urun) r.urun = [r.marka, r.model, r.kategori].filter(Boolean).join(' ');
     if(!r.urun) throw new Error('bad');
     const off = await openFoodFacts(String(r.barkod||'').replace(/\D/g,''));
     const p = {...r, off: off ? {nutri:off.nutriscore_grade||'', nova:off.nova_group||'', name:off.product_name||''} : null,
@@ -48,6 +51,8 @@ const Shop = (() => {
     const chips = [];
     if(p.off?.nutri && NUTRI_COLORS[p.off.nutri]) chips.push(`<span class="chip"><b style="background:${NUTRI_COLORS[p.off.nutri]}">${esc(p.off.nutri.toUpperCase())}</b>${esc(u.nutri)}</span>`);
     if(p.off?.nova) chips.push(`<span class="chip"><b style="background:${['','#038141','#fecb02','#ee8100','#e63e11'][p.off.nova]||'#999'}">${esc(p.off.nova)}</b>${esc(NOVA_TXT[lang][p.off.nova]||u.nova)}</span>`);
+    if(p.fiyat) chips.push(`<span class="chip">${esc(p.fiyat)}</span>`);
+    if(p.model) chips.push(`<span class="chip">${esc(p.model)}</span>`);
     if(p.barkod) chips.push(`<span class="chip">${esc(u.barcode)} ${esc(p.barkod)}</span>`);
     const list = (arr, cls, sign) => (arr||[]).filter(Boolean).map(x=>`<i class="${cls}">${sign}</i><span>${esc(x)}</span>`).join('');
     return `<div class="tag">${esc(p.emin===false ? u.unsure : (p.kategori || u.shopEyebrow))}</div>
