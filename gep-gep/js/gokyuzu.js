@@ -290,6 +290,21 @@ const Sky = (() => {
     c.closePath(); c.fill();
     c.fillStyle = frac < 0.5 ? '#2a2f3d' : '#f3efe3';
     c.beginPath(); c.ellipse(cx, cy, rx+0.5, R, 0, 0, Math.PI*2); c.fill();
+    drawSun(A, u);
+  }
+  /* Bugünün gün doğumu ve batımı (telefonda hesaplanır, internet gerekmez) */
+  function drawSun(A, u){
+    const el = $('sunRow'); if(!el) return;
+    const ob = new A.Observer(loc.lat, loc.lng, 0), now = new Date();
+    const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const rise = A.SearchRiseSet('Sun', ob, +1, d0, 1), set = A.SearchRiseSet('Sun', ob, -1, d0, 1);
+    const inDay = x => x && x.date >= d0 && x.date < new Date(d0.getTime()+86400000);
+    const hm = x => x.date.toLocaleTimeString(lang==='tr'?'tr-TR':'en-GB', {hour:'2-digit', minute:'2-digit'});
+    if(!inDay(rise) || !inDay(set)){ el.innerHTML = `<span>${esc(!inDay(rise)?u.sunNoRise:u.sunNoSet)}</span>`; return; }
+    const len = Math.round((set.date - rise.date)/60000), mm = ((len%60)+60)%60, hh = Math.floor(len/60);
+    el.innerHTML = `<div class="sunt"><span>☀ ${esc(u.sunRise)}</span><b>${hm(rise)}</b></div>
+      <div class="sunt"><span>☾ ${esc(u.sunSet)}</span><b>${hm(set)}</b></div>
+      <div class="sunl">${esc(u.dayLen(hh, mm))}</div>`;
   }
 
   /* ---------- Bölüm ---------- */
