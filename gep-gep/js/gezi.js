@@ -404,13 +404,14 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
   /* Her durak için Commons'ta elle seçilmiş KATEGORİ(ler): konu kesin, arama tahmini yok. */
   const GPIC = { kule:['Exterior of Galata Tower'], kamondo:['Camondo Stairs'], banka:['Ottoman Bank Museum','SALT (institution)'],
                  arap:['Arap Mosque'], mevlevi:['Galata Mevlevihanesi'] };
+  const GPIN = { banka:['File:Ottoman Banks Archives and Research Centre.jpg'] };
   const LIC_OK = /^(cc0|public domain|pd[- ]|pdm|cc by(-sa)? \d)/i;
   const licRank = l => /^(cc0|public domain|pd|pdm)/i.test(l) ? 0 : /^cc by \d/i.test(l) ? 1 : 2;
   const plain = h => { const d = document.createElement('div'); d.innerHTML = String(h||''); return (d.textContent||'').replace(/\s+/g,' ').trim(); };
   async function loadGalataPics(){
     let changed = false;
     await Promise.all(GALATA.map(async s => {
-      const key = 'pic3-'+s.id, hit = Store.get(key, null);
+      const key = 'pic4-'+s.id, hit = Store.get(key, null);
       if(hit){ s.img = hit.src; s.pic = hit; return; }
       const q = GPIC[s.id]; if(!q) return;
       try{
@@ -420,9 +421,15 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
             prop:'imageinfo', iiprop:'url|extmetadata|size|mime', iiurlwidth:'900'}));
           return ((await r.json()).query||{}).pages || [];
         }));
-        const pages = [].concat(...lists);
+        const pins = await Promise.all((GPIN[s.id]||[]).map(async t => {
+          try{ const r = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+            action:'query', format:'json', formatversion:'2', origin:'*', titles:t, prop:'imageinfo', iiprop:'url|extmetadata|size|mime', iiurlwidth:'900'}));
+            return ((await r.json()).query||{}).pages || []; }catch(e){ return []; } }));
+        const pinned = new Set([].concat(...pins).map(p=>p.title));
+        const pages = [].concat(...pins, ...lists);
         const ok = pages.map(p=>({p, ii:(p.imageinfo||[])[0]})).filter(({p,ii})=>{
-          if(!ii || ii.mime!=='image/jpeg' || ii.width<1400 || ii.width>ii.height*2.2 || ii.height>ii.width*1.9) return false;
+          if(!ii || ii.mime!=='image/jpeg' || ii.width<1400) return false;
+          if(!pinned.has(p.title) && (ii.width>ii.height*2.2 || ii.height>ii.width*1.9)) return false;
           const m = ii.extmetadata||{}, lic = (m.LicenseShortName||{}).value||'';
           if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,''))) return false;
           return LIC_OK.test(lic) && !/map|plan|drawing|poster|engraving|painting|logo/i.test(p.title);
@@ -431,6 +438,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
                + (/exterior|view|skyline|panoram|sunset|dusk|from|tower of|kulesi|street|facade|mosque|camii|steps|merdiven|building|bina/.test(t) ? -3 : 0)
                + (o.ii.width >= o.ii.height*1.15 ? -2 : (o.ii.width < o.ii.height*0.9 ? 1 : 0));
           return o; })
+        .map(o=>{ if(pinned.has(o.p.title)) o.sc = -100; return o; })
         .sort((x,y)=> x.sc-y.sc || licRank(x.ii.extmetadata.LicenseShortName.value)-licRank(y.ii.extmetadata.LicenseShortName.value) || x.p.index-y.p.index);
         const best = ok[0];
         if(best){
