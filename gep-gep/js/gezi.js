@@ -204,6 +204,10 @@ const Gezi = (() => {
       else if(l.type==='symbol'){
         p['text-color'] = '#d9cbc1'; p['text-halo-color'] = '#0c090c'; p['text-halo-width'] = 1.2;
         p['icon-opacity'] = 0;
+        if(l.layout && l.layout['text-field']){
+          const L = (typeof lang!=='undefined' && lang==='en') ? 'en' : 'tr';
+          l.layout['text-field'] = L==='en' ? ['coalesce',['get','name_en'],['get','name']] : ['coalesce',['get','name:tr'],['get','name']];
+        }
       }
     });
     return st;
