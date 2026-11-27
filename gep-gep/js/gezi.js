@@ -80,6 +80,18 @@ const Gezi = (() => {
          + (mids.length?`&waypoints=${encodeURIComponent(mids.map(ll).join('|'))}`:'') + `&travelmode=${walk?'walking':'driving'}`;
   }
 
+  /* İstanbul semtleri: dokununca o semtin çevresindeki yerler açılır (Galata: elle yazılmış seçme rota) */
+  const SEMT = [['Galata',41.0256,28.9741],['Sultanahmet',41.0054,28.9768],['Taksim',41.0370,28.9850],['Beşiktaş',41.0430,29.0070],
+    ['Ortaköy',41.0476,29.0262],['Üsküdar',41.0255,29.0153],['Kadıköy',40.9906,29.0245],['Balat',41.0295,28.9486],['Eyüp',41.0480,28.9340],
+    ['Bakırköy',40.9795,28.8723],['Zeytinburnu',40.9930,28.9060],['Sarıyer',41.1668,29.0571],['Büyükada',40.8760,29.1290]];
+  function renderSemt(){
+    const el = $('semt'); if(!el) return;
+    el.innerHTML = SEMT.map(([n])=>`<button data-semt="${n}" class="${placeName===n?'on':''}">${n}</button>`).join('');
+    el.querySelectorAll('button').forEach(b=>b.onclick = () => {
+      const x = SEMT.find(s=>s[0]===b.dataset.semt); if(!x) return;
+      Voice.stop(); manual = false; storyOpen = false; loadNear(x[1], x[2], x[0]); window.scrollTo({top:0, behavior:'smooth'});
+    });
+  }
   function useGalata(){ stops=GALATA; far=[]; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; needFit=true; }
 
   /* ---------- OpenStreetMap'ten yakın yerler (Vikipedi'de maddesi olmayan cami, anıt, iskele, park...) ---------- */
@@ -389,10 +401,11 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('intro').textContent = mode==='galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
     $('routeTitle').textContent = u.route; $('routeMeta').textContent = u.stopsN(stops.length);
     $('mapTitle').textContent = u.mapTitle; $('mapMe').textContent = pos ? u.mapMe : '';
+    renderSemt();
     $('q').placeholder = u.searchPh; $('qBtn').textContent = u.searchBtn;
     $('camBtn').innerHTML = ICON.camera + esc(u.cam);
     $('mapBtn').innerHTML = ICON.nav + esc(u.mapBtn); $('mapBtn').href = mapsLink();
-    $('sample').textContent = !GEP.nearWeb ? '' : (mode==='galata' ? (pos && dist(pos,GALATA[0])>1500 ? u.myPlace : '') : u.sample);
+    $('sample').textContent = '';   /* Galata artık semt şeridinde */
     $('resetRoute').textContent = u.resetRoute;
     const isSaved = Journal.routes().some(r=>r.key===routeKey()+'-'+lang);
     $('saveRoute').textContent = isSaved ? u.saved : u.saveRoute; $('saveRoute').classList.toggle('done', isSaved);
