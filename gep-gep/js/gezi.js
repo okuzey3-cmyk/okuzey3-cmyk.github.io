@@ -43,8 +43,8 @@ const Gezi = (() => {
 
   function isSight(title){
     const t = ' '+title.toLocaleLowerCase(lang==='tr'?'tr':'en');
-    if(SKIP.some(w=>t.includes(' '+w)) || TRANSIT.test(title)) return false;
-    return KEYS.tr.some(w=>t.includes(w)) || KEYS.en.some(w=>t.includes(' '+w));
+    if(TRANSIT.test(title)) return false;
+    return !/ (mahallesi|köyü|ilçesi|beldesi|seçim bölgesi)$| \((mahalle|ilçe)\)$/i.test(t) && !/^(.*) (neighbourhood|district)$/i.test(t);
   }
   const weight = title => { const t = title.toLocaleLowerCase('tr'); return STRONG.some(w=>t.includes(w)) ? 1 : 0; };
 
@@ -144,6 +144,7 @@ const Gezi = (() => {
     muze:{tr:'Müze',en:'Museum'}, gezi:{tr:'Gezilecek yer',en:'Attraction'}, manzara:{tr:'Manzara noktası',en:'Viewpoint'},
     park:{tr:'Park',en:'Park'}, iskele:{tr:'İskele',en:'Pier'}, fener:{tr:'Fener',en:'Lighthouse'}, kule:{tr:'Kule',en:'Tower'},
     sanat:{tr:'Sanat eseri',en:'Artwork'}, anit:{tr:'Anıt',en:'Monument'},
+    cesme:{tr:'Çeşme',en:'Fountain'}, kultur:{tr:'Kültür mekânı',en:'Cultural venue'}, carsi:{tr:'Çarşı',en:'Market'}, kopru:{tr:'Köprü',en:'Bridge'}, dogal:{tr:'Doğal güzellik',en:'Natural feature'}, liman:{tr:'Marina',en:'Marina'},
     mesire:{tr:'Mesire alanı',en:'Picnic area'}, baraj:{tr:'Baraj',en:'Dam'}, plaj:{tr:'Plaj',en:'Beach'}, doga:{tr:'Doğa alanı',en:'Nature area'}, gol:{tr:'Göl',en:'Lake'}
   };
   function osmKind(t){
@@ -152,27 +153,34 @@ const Gezi = (() => {
     if(t.natural==='beach') return 'plaj';
     if(t.leisure==='nature_reserve'||t.boundary==='protected_area'||t.landuse==='forest'||t.natural==='wood') return 'doga';
     if(t.natural==='water') return 'gol';
+    if(t.amenity==='fountain') return 'cesme';
+    if(t.amenity==='theatre'||t.amenity==='arts_centre'||t.amenity==='library') return 'kultur';
+    if(t.amenity==='marketplace') return 'carsi';
+    if(t.man_made==='bridge') return 'kopru';
+    if(t.leisure==='marina') return 'liman';
+    if(/^(peak|cave_entrance|spring|cliff)$/.test(t.natural||'')) return 'dogal';
     if(t.amenity==='place_of_worship') return (t.religion==='muslim'||t.building==='mosque') ? 'cami' : 'ibadet';
     if(t.tourism==='museum'||t.tourism==='gallery') return 'muze';
     if(t.tourism==='viewpoint') return 'manzara';
     if(t.tourism==='artwork') return 'sanat';
-    if(t.tourism==='attraction') return 'gezi';
+    if(t.tourism==='attraction'||t.tourism) return 'gezi';
     if(t.historic==='monument'||t.historic==='memorial') return 'anit';
     if(t.historic) return 'tarih';
     if(t.leisure==='park'||t.leisure==='garden') return 'park';
     if(t.man_made==='pier') return 'iskele';
     if(t.man_made==='lighthouse') return 'fener';
-    if(t.man_made==='tower') return 'kule';
+    if(t.man_made==='tower'||t.man_made==='water_tower') return 'kule';
     return '';
   }
   async function osmPlaces(lat, lng){
     try{
-      const a = `(around:2500,${lat},${lng})`, b = `(around:6000,${lat},${lng})`;
-      const q = `[out:json][timeout:12];(nwr${a}["name"]["amenity"="place_of_worship"];nwr${a}["name"]["historic"];`
-        + `nwr${a}["name"]["tourism"~"^(attraction|museum|viewpoint|artwork|gallery)$"];nwr${a}["name"]["leisure"~"^(park|garden)$"];`
-        + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower)$"];`
+      const a = `(around:3000,${lat},${lng})`, b = `(around:6000,${lat},${lng})`;
+      const q = `[out:json][timeout:12];(nwr${a}["name"]["amenity"~"^(place_of_worship|fountain|theatre|arts_centre|library|marketplace)$"];nwr${a}["name"]["historic"];`
+        + `nwr${a}["name"]["tourism"]["tourism"!~"^(hotel|hostel|guest_house|apartment|motel|information|camp_pitch|chalet)$"];`
+        + `nwr${a}["name"]["leisure"~"^(park|garden|picnic_site|nature_reserve|marina)$"];`
+        + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower|bridge|water_tower)$"];nwr${a}["name"]["natural"~"^(peak|cave_entrance|spring|cliff)$"];`
         + `nwr${b}["name"]["tourism"="picnic_site"];nwr${b}["name"]["leisure"~"^(picnic_site|nature_reserve)$"];nwr${b}["name"]["waterway"="dam"];`
-        + `nwr${b}["name"]["water"~"^(reservoir|lake)$"];nwr${b}["name"]["natural"="beach"];nwr${b}["name"]["landuse"="forest"]["name"~"Orman|Koru|Mesire|Tabiat",i];);out center tags 180;`;
+        + `nwr${b}["name"]["water"~"^(reservoir|lake)$"];nwr${b}["name"]["natural"="beach"];nwr${b}["name"]["landuse"="forest"]["name"~"Orman|Koru|Mesire|Tabiat",i];);out center tags 400;`;
       const ac = new AbortController(); setTimeout(()=>ac.abort(), 6000);
       const r = await fetch('https://overpass-api.de/api/interpreter', {signal:ac.signal, method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}});
       if(!r.ok) return [];
@@ -200,15 +208,17 @@ const Gezi = (() => {
       let near = c.filter(x=>x.dist<=3000);
       if(near.length < 4) near = c.filter(x=>x.dist<=6000);
       if(near.length < 3) near = c;
-      near = near.slice(0, 8);
+      near = near.slice(0, 40);
       const nearIds = new Set(near.map(x=>x.pageid));
       let farC = c.filter(x=>!nearIds.has(x.pageid)).sort((a,b)=>(weight(b.title)-weight(a.title)) || (a.dist-b.dist)).slice(0,4);
       const osmAll = await osmP;
       if(!near.length && !osmAll.length){ useGalata(); loadingNear=false; toast(T().none, 3200); return App.refresh(); }
       const ids = near.concat(farC).map(x=>x.pageid);
-      const d = ids.length ? await wiki({action:'query', pageids:ids.join('|'), prop:'extracts|description|pageimages',
-                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail|name', pithumbsize:640}) : {};
-      const pages = d.query?.pages||[];
+      /* Vikipedi tek seferde en fazla 20 özet verir: 20'şerli gruplar hâlinde iste */
+      const groups = []; for(let i=0;i<ids.length;i+=20) groups.push(ids.slice(i,i+20));
+      const parts = await Promise.all(groups.map(gr => wiki({action:'query', pageids:gr.join('|'), prop:'extracts|description|pageimages',
+                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail|name', pithumbsize:640}).catch(()=>({}))));
+      const pages = [].concat(...parts.map(d=>d.query?.pages||[]));
       /* Fotoğraf yalnızca Commons'ta ve uygun lisanslıysa gösterilir; yazar/lisans etiketi eklenir */
       const infos = {}, nmz = n => String(n||'').replace(/^File:/,'').replace(/_/g,' ');
       const names = [...new Set(pages.map(p=>p.pageimage).filter(Boolean))];
@@ -232,8 +242,8 @@ const Gezi = (() => {
       /* OpenStreetMap yerleri: Vikipedi'dekilerle çakışanları ele, sıradan camilerden en fazla 3 al */
       const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
       const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
-        .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=(/^(mesire|baraj|plaj|doga|gol)$/.test(o.kind)?6000:2500)).sort((a,b)=>a.d-b.d);
-      const pick = [...fresh.filter(o=>o.strong).slice(0,6), ...fresh.filter(o=>!o.strong).slice(0,3)];
+        .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=(/^(mesire|baraj|plaj|doga|gol)$/.test(o.kind)?6000:3000)).sort((a,b)=>a.d-b.d);
+      const pick = fresh.slice(0, 50);
       const wpTitle = {};   /* OSM'de wikipedia etiketi olanların metnini Vikipedi'den al */
       await Promise.all(pick.filter(o=>/^(tr|en):/.test(o.wp)).map(async o=>{ try{
         const [pre, ...rest] = o.wp.split(':'), j = await (await fetch(`https://${pre}.wikipedia.org/w/api.php?` + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*',
@@ -246,7 +256,7 @@ const Gezi = (() => {
         const en = ex || `${o.title} is a ${k.en.toLowerCase()} ${label?'in '+label:'in this area'}. There is no detailed story for it yet; check the information board on site or Wikipedia.`;
         return {id:o.id, lat:o.lat, lng:o.lng, img:'', osm:true, far:false, title:o.title, [lang]:{ad:o.title, kisa:k[lang], metin: lang==='tr'?tr:en, rehber:!ex}};
       });
-      stops = orderRoute([...wikiStops, ...osmStops].slice(0,12), pos || center);
+      stops = orderRoute([...wikiStops, ...osmStops].slice(0,80), pos || center);
       far = farC.map(x=>make(x,true));
       mode = 'near'; manual = false; storyOpen = false; needFit = true;
       selected = autoPick();
