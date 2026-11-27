@@ -82,11 +82,52 @@ const Gezi = (() => {
 
   function useGalata(){ stops=GALATA; far=[]; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; needFit=true; }
 
+  /* ---------- OpenStreetMap'ten yakın yerler (Vikipedi'de maddesi olmayan cami, anıt, iskele, park...) ---------- */
+  const KIND = {
+    cami:{tr:'Cami',en:'Mosque'}, ibadet:{tr:'İbadethane',en:'Place of worship'}, tarih:{tr:'Tarihî yapı',en:'Historic site'},
+    muze:{tr:'Müze',en:'Museum'}, gezi:{tr:'Gezilecek yer',en:'Attraction'}, manzara:{tr:'Manzara noktası',en:'Viewpoint'},
+    park:{tr:'Park',en:'Park'}, iskele:{tr:'İskele',en:'Pier'}, fener:{tr:'Fener',en:'Lighthouse'}, kule:{tr:'Kule',en:'Tower'},
+    sanat:{tr:'Sanat eseri',en:'Artwork'}, anit:{tr:'Anıt',en:'Monument'}
+  };
+  function osmKind(t){
+    if(t.amenity==='place_of_worship') return (t.religion==='muslim'||t.building==='mosque') ? 'cami' : 'ibadet';
+    if(t.tourism==='museum'||t.tourism==='gallery') return 'muze';
+    if(t.tourism==='viewpoint') return 'manzara';
+    if(t.tourism==='artwork') return 'sanat';
+    if(t.tourism==='attraction') return 'gezi';
+    if(t.historic==='monument'||t.historic==='memorial') return 'anit';
+    if(t.historic) return 'tarih';
+    if(t.leisure==='park'||t.leisure==='garden') return 'park';
+    if(t.man_made==='pier') return 'iskele';
+    if(t.man_made==='lighthouse') return 'fener';
+    if(t.man_made==='tower') return 'kule';
+    return '';
+  }
+  async function osmPlaces(lat, lng){
+    try{
+      const a = `(around:2500,${lat},${lng})`;
+      const q = `[out:json][timeout:12];(nwr${a}["name"]["amenity"="place_of_worship"];nwr${a}["name"]["historic"];`
+        + `nwr${a}["name"]["tourism"~"^(attraction|museum|viewpoint|artwork|gallery)$"];nwr${a}["name"]["leisure"~"^(park|garden)$"];`
+        + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower)$"];);out center tags 150;`;
+      const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      if(!r.ok) return [];
+      const seen = new Set();
+      return ((await r.json()).elements||[]).map(e=>{
+        const t = e.tags||{}, la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, k = osmKind(t);
+        if(!la || !lo || !k || !t.name) return null;
+        if(/^(yes|no)$/i.test(t.name) || seen.has(t.name.toLowerCase())) return null; seen.add(t.name.toLowerCase());
+        const strong = !!(t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
+        return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong};
+      }).filter(Boolean);
+    }catch(e){ return []; }
+  }
+
   async function loadNear(lat, lng, label){
     if(!GEP.nearWeb){ useGalata(); manual=false; return App.refresh(); }   /* Vikipedi'den yakın yer çekme kapalı (ticari temizlik) */
     if(dist({lat,lng}, GALATA[0]) < 1500){ useGalata(); manual=false; return App.refresh(); }
     loadingNear=true; netErr=false; Voice.stop(); App.refresh();
     try{
+      const osmP = osmPlaces(lat, lng);
       const g = await wiki({action:'query', list:'geosearch', gscoord:`${lat}|${lng}`, gsradius:10000, gslimit:200});
       const c = (g.query?.geosearch||[]).filter(x=>isSight(x.title));
       let near = c.filter(x=>x.dist<=3000);
@@ -95,10 +136,11 @@ const Gezi = (() => {
       near = near.slice(0, 8);
       const nearIds = new Set(near.map(x=>x.pageid));
       let farC = c.filter(x=>!nearIds.has(x.pageid)).sort((a,b)=>(weight(b.title)-weight(a.title)) || (a.dist-b.dist)).slice(0,4);
-      if(!near.length){ useGalata(); loadingNear=false; toast(T().none, 3200); return App.refresh(); }
+      const osmAll = await osmP;
+      if(!near.length && !osmAll.length){ useGalata(); loadingNear=false; toast(T().none, 3200); return App.refresh(); }
       const ids = near.concat(farC).map(x=>x.pageid);
-      const d = await wiki({action:'query', pageids:ids.join('|'), prop:'extracts|description|pageimages',
-                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail|name', pithumbsize:640});
+      const d = ids.length ? await wiki({action:'query', pageids:ids.join('|'), prop:'extracts|description|pageimages',
+                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail|name', pithumbsize:640}) : {};
       const pages = d.query?.pages||[];
       /* Fotoğraf yalnızca Commons'ta ve uygun lisanslıysa gösterilir; yazar/lisans etiketi eklenir */
       const infos = {}, nmz = n => String(n||'').replace(/^File:/,'').replace(/_/g,' ');
@@ -119,7 +161,25 @@ const Gezi = (() => {
         return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title, [lang]:t};
       };
       center = {lat, lng};
-      stops = orderRoute(near.map(x=>make(x,false)), pos || center);
+      const wikiStops = near.map(x=>make(x,false));
+      /* OpenStreetMap yerleri: Vikipedi'dekilerle çakışanları ele, sıradan camilerden en fazla 3 al */
+      const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
+      const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
+        .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=2500).sort((a,b)=>a.d-b.d);
+      const pick = [...fresh.filter(o=>o.strong).slice(0,6), ...fresh.filter(o=>!o.strong).slice(0,3)];
+      const wpTitle = {};   /* OSM'de wikipedia etiketi olanların metnini Vikipedi'den al */
+      await Promise.all(pick.filter(o=>/^(tr|en):/.test(o.wp)).map(async o=>{ try{
+        const [pre, ...rest] = o.wp.split(':'), j = await (await fetch(`https://${pre}.wikipedia.org/w/api.php?` + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*',
+          titles:rest.join(':'), prop:'extracts', exintro:1, explaintext:1}))).json();
+        const ex = cleanExtract(j.query?.pages?.[0]?.extract); if(ex) wpTitle[o.id] = ex; }catch(e){} }));
+      const osmStops = pick.map(o=>{
+        const k = KIND[o.kind], ex = wpTitle[o.id];
+        const where = label || (lang==='tr'?'bu çevrede':'in this area');
+        const tr = ex || `${o.title}, ${where} bulunan bir ${k.tr.toLocaleLowerCase('tr')}. Bu yer için ayrıntılı bir anlatım henüz yok; yerindeki bilgi levhasına ya da Vikipedi'ye bakabilirsin.`;
+        const en = ex || `${o.title} is a ${k.en.toLowerCase()} ${label?'in '+label:'in this area'}. There is no detailed story for it yet; check the information board on site or Wikipedia.`;
+        return {id:o.id, lat:o.lat, lng:o.lng, img:'', osm:true, far:false, title:o.title, [lang]:{ad:o.title, kisa:k[lang], metin: lang==='tr'?tr:en, rehber:!ex}};
+      });
+      stops = orderRoute([...wikiStops, ...osmStops].slice(0,12), pos || center);
       far = farC.map(x=>make(x,true));
       mode = 'near'; manual = false; storyOpen = false; needFit = true;
       selected = autoPick();
