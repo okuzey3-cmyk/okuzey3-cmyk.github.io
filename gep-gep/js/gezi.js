@@ -25,17 +25,18 @@ const Gezi = (() => {
         'tabiat parkı','milli park','millî park','antik','tiyatro','tiyatrosu','ören','höyük','höyüğü','konak','konağı','köşk','köşkü','kasrı',
         'sinagog','surları','suru','kemeri','meydanı','çarşı','çarşısı','arasta','manastır','manastırı','şapel','tuz mağara','kaya mezar',
         'kalıntı','harabe','şehitliği','kanal','yalı','yalısı','sarnıç','sarnıcı','hisar','hisarı','kümbet','kümbeti','imaret',
-        'heykel','heykeli',' garı','opera','operası','park ','parkı','iskele','iskelesi','bahçe','bahçesi','kütüphane','mezarlığı','fener','feneri','tersane','sanat merkezi','pazarı'],
+        'heykel','heykeli',' garı','opera','operası','park ','parkı','iskele','iskelesi','bahçe','bahçesi','kütüphane','mezarlığı','fener','feneri','tersane','sanat merkezi','pazarı',
+        'baraj','barajı','mesire','orman','ormanı','koru','korusu','plaj','plajı','göleti','tepe','tepesi','sahili','vadisi','şelalesi'],
     en:['mosque','castle','fortress','museum','bridge','tomb','mausoleum','cave','church','cathedral','palace','fountain','madrasa',
         'tower','monument','bath','hammam','caravanserai','waterfall','canyon','lake','national park','ancient','theatre','theater',
         'ruins','mansion','synagogue','square','bazaar','market','monastery','basilica','gate','walls','lighthouse','cistern','castle',
-        'statue','opera house','park','garden','pier','library','cemetery','railway terminal']
+        'statue','opera house','park','garden','pier','library','cemetery','railway terminal','dam','reservoir','forest','beach','picnic','hill','valley']
   };
   // uzaktaki yerlerde öne çıksın diye ağırlık
   const STRONG = ['mağara','kanyon','şelale','milli park','millî park','tabiat parkı','antik','ören','kale','gölü','höyük','kaya mezar',
                   'cave','canyon','waterfall','national park','ancient','ruins','castle','fortress','lake'];
   const SKIP = ['mahallesi','köyü','ilçesi','lisesi','okulu','ilkokulu','ortaokulu','üniversitesi','fakültesi','istasyonu','durağı',
-                'hastanesi','stadyumu','spor','kulübü','belediyesi','seçim','barajı','havalimanı','otoyol','caddesi','sokağı','apartmanı',
+                'hastanesi','stadyumu','spor','kulübü','belediyesi','seçim','havalimanı','otoyol','caddesi','sokağı','apartmanı',
                 'neighbourhood','district','school','university','station','hospital','stadium','club','airport','street',
                 'tramvay','tramvayı','metro','metrosu','hattı','füniküler','teleferik','marmaray','metrobüs','otobüs','otogar','tram','line','railway','funicular','bus','ferry line'];
   const TRANSIT = /tramvay|tram\b|metro|metrobüs|marmaray|füniküler|funicular|teleferik|istasyon|station|durağı|durak\b|otobüs|otogar|hattı|\bline\b|railway/i;
@@ -91,7 +92,7 @@ const Gezi = (() => {
     ['Kadıköy',40.9906,29.0245,[['Kadıköy',40.9906,29.0245],['Moda',40.9810,29.0260],['Haydarpaşa',41.0010,29.0200],['Fenerbahçe',40.9680,29.0360]]],
     ['Bakırköy',40.9795,28.8723,[['Bakırköy',40.9795,28.8723],['Ataköy',40.9810,28.8480],['Yeşilköy',40.9600,28.8260],['Florya',40.9760,28.7880]]],
     ['Zeytinburnu',40.9930,28.9060,[['Zeytinburnu',40.9930,28.9060],['Topkapı',41.0120,28.9180],['Kazlıçeşme',40.9920,28.9140],['Merkezefendi',41.0040,28.9100]]],
-    ['Eyüpsultan',41.0480,28.9340,[['Eyüp',41.0480,28.9340],['Pierre Loti',41.0560,28.9330]]],
+    ['Eyüpsultan',41.0480,28.9340,[['Eyüp',41.0480,28.9340],['Pierre Loti',41.0560,28.9330],['Alibeyköy',41.0880,28.9380]]],
     ['Sarıyer',41.1668,29.0571,[['Sarıyer',41.1668,29.0571],['Emirgan',41.1070,29.0540],['İstinye',41.1130,29.0580],['Rumeli Hisarı',41.0850,29.0560]]],
     ['Adalar',40.8760,29.1290,[['Büyükada',40.8760,29.1290],['Heybeliada',40.8780,29.0980]]]
   ];
@@ -142,9 +143,15 @@ const Gezi = (() => {
     cami:{tr:'Cami',en:'Mosque'}, ibadet:{tr:'İbadethane',en:'Place of worship'}, tarih:{tr:'Tarihî yapı',en:'Historic site'},
     muze:{tr:'Müze',en:'Museum'}, gezi:{tr:'Gezilecek yer',en:'Attraction'}, manzara:{tr:'Manzara noktası',en:'Viewpoint'},
     park:{tr:'Park',en:'Park'}, iskele:{tr:'İskele',en:'Pier'}, fener:{tr:'Fener',en:'Lighthouse'}, kule:{tr:'Kule',en:'Tower'},
-    sanat:{tr:'Sanat eseri',en:'Artwork'}, anit:{tr:'Anıt',en:'Monument'}
+    sanat:{tr:'Sanat eseri',en:'Artwork'}, anit:{tr:'Anıt',en:'Monument'},
+    mesire:{tr:'Mesire alanı',en:'Picnic area'}, baraj:{tr:'Baraj',en:'Dam'}, plaj:{tr:'Plaj',en:'Beach'}, doga:{tr:'Doğa alanı',en:'Nature area'}, gol:{tr:'Göl',en:'Lake'}
   };
   function osmKind(t){
+    if(t.tourism==='picnic_site'||t.leisure==='picnic_site') return 'mesire';
+    if(t.waterway==='dam'||t.water==='reservoir') return 'baraj';
+    if(t.natural==='beach') return 'plaj';
+    if(t.leisure==='nature_reserve'||t.boundary==='protected_area'||t.landuse==='forest'||t.natural==='wood') return 'doga';
+    if(t.natural==='water') return 'gol';
     if(t.amenity==='place_of_worship') return (t.religion==='muslim'||t.building==='mosque') ? 'cami' : 'ibadet';
     if(t.tourism==='museum'||t.tourism==='gallery') return 'muze';
     if(t.tourism==='viewpoint') return 'manzara';
@@ -160,10 +167,12 @@ const Gezi = (() => {
   }
   async function osmPlaces(lat, lng){
     try{
-      const a = `(around:2500,${lat},${lng})`;
+      const a = `(around:2500,${lat},${lng})`, b = `(around:6000,${lat},${lng})`;
       const q = `[out:json][timeout:12];(nwr${a}["name"]["amenity"="place_of_worship"];nwr${a}["name"]["historic"];`
         + `nwr${a}["name"]["tourism"~"^(attraction|museum|viewpoint|artwork|gallery)$"];nwr${a}["name"]["leisure"~"^(park|garden)$"];`
-        + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower)$"];);out center tags 150;`;
+        + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower)$"];`
+        + `nwr${b}["name"]["tourism"="picnic_site"];nwr${b}["name"]["leisure"~"^(picnic_site|nature_reserve)$"];nwr${b}["name"]["waterway"="dam"];`
+        + `nwr${b}["name"]["water"~"^(reservoir|lake)$"];nwr${b}["name"]["natural"="beach"];nwr${b}["name"]["landuse"="forest"]["name"~"Orman|Koru|Mesire|Tabiat",i];);out center tags 180;`;
       const ac = new AbortController(); setTimeout(()=>ac.abort(), 6000);
       const r = await fetch('https://overpass-api.de/api/interpreter', {signal:ac.signal, method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}});
       if(!r.ok) return [];
@@ -173,7 +182,7 @@ const Gezi = (() => {
         if(!la || !lo || !k || !t.name) return null;
         if(t.railway || t.public_transport || t.highway || t.route || /^(tram|railway|vehicle|aircraft|locomotive|milestone|boundary_stone)$/.test(t.historic||'') || TRANSIT.test(t.name)) return null;
         if(/^(yes|no)$/i.test(t.name) || seen.has(t.name.toLowerCase())) return null; seen.add(t.name.toLowerCase());
-        const strong = !!(t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
+        const strong = !!(/^(mesire|baraj|plaj|doga|gol)$/.test(k) || t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
         return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong};
       }).filter(Boolean);
     }catch(e){ return []; }
@@ -223,7 +232,7 @@ const Gezi = (() => {
       /* OpenStreetMap yerleri: Vikipedi'dekilerle çakışanları ele, sıradan camilerden en fazla 3 al */
       const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
       const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
-        .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=2500).sort((a,b)=>a.d-b.d);
+        .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=(/^(mesire|baraj|plaj|doga|gol)$/.test(o.kind)?6000:2500)).sort((a,b)=>a.d-b.d);
       const pick = [...fresh.filter(o=>o.strong).slice(0,6), ...fresh.filter(o=>!o.strong).slice(0,3)];
       const wpTitle = {};   /* OSM'de wikipedia etiketi olanların metnini Vikipedi'den al */
       await Promise.all(pick.filter(o=>/^(tr|en):/.test(o.wp)).map(async o=>{ try{
