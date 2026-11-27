@@ -354,6 +354,7 @@ const Gezi = (() => {
       map.addLayer({id:'rt', type:'line', source:'rt', layout:{'line-cap':'round','line-join':'round'},
         paint:{'line-color':'#e8794a', 'line-width':3.5, 'line-opacity':.9, 'line-dasharray':[0.4, 2.2]}});
     };
+    map.on('click', () => hidePop());
     map.on('load', () => {
       addLine(); mapReady = true; drawMap();
       darkStyle().then(st => { map.setStyle(st); map.once('styledata', ()=>{ const t=setInterval(()=>{ if(map.isStyleLoaded()){ clearInterval(t); addLine(); drawMap(); } }, 60); setTimeout(()=>clearInterval(t), 6000); }); }).catch(()=>{});
@@ -364,40 +365,86 @@ const Gezi = (() => {
     if(onClick) el.addEventListener('click', e=>{ e.stopPropagation(); onClick(); });
     return el;
   }
+  /* Harita: işaretler yalnızca durak/seçim/ziyaret değişince yeniden kurulur; konum noktası yerinde kayar */
+  let mapKey = '', meMarker = null, mapPop = null, lastSel = null, popOpen = false;
+  function walkLink(s){
+    const ll = x => `${x.lat.toFixed(6)},${x.lng.toFixed(6)}`;
+    return 'https://www.google.com/maps/dir/?api=1' + (pos?`&origin=${ll(pos)}`:'') + `&destination=${ll(s)}&travelmode=walking`;
+  }
+  function showPop(s){
+    const box = $('mapPop'); if(!box) return; const u = T(), t = txt(s);
+    const d = pos ? fmt(dist(pos,s)) : '';
+    box.innerHTML = `<button class="x" aria-label="${esc(u.close||'Kapat')}">×</button>
+      ${s.img?`<div class="ph" style="background-image:url('${esc(s.img)}')"></div>`:`<div class="ph ltr">${esc((t.ad||'?')[0])}</div>`}
+      <div class="tx"><b>${esc(t.ad)}</b><span>${s.gizli?'★ ':''}${esc(t.kisa||'')}${d?' · '+d:''}</span>
+        <div class="bt"><button class="go1">${esc(u.listen||'Dinle')}</button><a class="go2" target="_blank" rel="noopener" href="${walkLink(s)}">${esc(u.directions||'Yol tarifi')}</a></div></div>`;
+    box.hidden = false; popOpen = true;
+    box.querySelector('.x').onclick = e => { e.stopPropagation(); hidePop(); };
+    box.querySelector('.go1').onclick = () => { hidePop(); setFull(false); if(selected!==s.id){ Voice.stop(); storyOpen=false; } selected=s.id; manual=true; App.refresh();
+      window.scrollTo({top:0, behavior:'smooth'}); setTimeout(()=>play(s.id), 350); };
+  }
+  function hidePop(){ const b=$('mapPop'); if(b) b.hidden = true; popOpen = false; }
+  function setFull(on){
+    const card = document.querySelector('.mapcard'); if(!card) return;
+    /* Tam ekranda kart body'ye taşınır: üstteki bulanık/transformlu kutular sabit konumu bozmasın */
+    if(on && !setFull.home){ setFull.home = card.parentNode; setFull.next = card.nextSibling; document.body.appendChild(card); }
+    if(!on && setFull.home){ setFull.home.insertBefore(card, setFull.next); setFull.home = null; }
+    document.body.classList.toggle('mapfull', on); document.body.style.overflow = on ? 'hidden' : '';
+    const b = $('mapFull'); if(b) b.setAttribute('aria-pressed', on?'true':'false');
+    if(map) setTimeout(()=>{ map.resize(); }, 60);
+  }
   function drawMap(){
     if(!map){ initMap(); return; }
     if(!mapReady) return;
     map.resize();
-    mapMarkers.forEach(m=>m.remove()); mapMarkers = [];
     const v = visited();
+    const key = [placeName, selected, stops.map(s=>s.id+(v.has(s.id)?'v':'')+(s.img?'i':'')).join(','), far.map(s=>s.id).join(',')].join('|');
+    if(key !== mapKey){
+      mapKey = key;
+      mapMarkers.forEach(m=>m.remove()); mapMarkers = [];
+      /* Çizgi yalnızca yürünebilir kısa rotada: uzun ilçe listesinde karışık zikzak çizmez */
+      const line = stops.length <= 12 ? stops.map(s=>[s.lng, s.lat]) : [];
+      const src = map.getSource('rt');
+      if(src) src.setData({type:'FeatureCollection', features: line.length>1 ? [{type:'Feature', geometry:{type:'LineString', coordinates:line}}] : []});
+      const placed = [];
+      const put = (el, lng, lat) => {
+        const near = placed.filter(q=>dist({lat,lng},{lat:q[1],lng:q[0]}) < 40).length;
+        placed.push([lng,lat]);
+        mapMarkers.push(new maplibregl.Marker({element:el, anchor:'center', offset:[near*20, near*-20]}).setLngLat([lng,lat]).addTo(map));
+      };
+      const tap = s => () => { selectQuiet(s.id); showPop(s); map.easeTo({center:[s.lng,s.lat], duration:400}); };
+      stops.forEach((s,i)=>{
+        const cls = 'pin' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'') + (s.gizli?' gizli':'');
+        put(pinEl(v.has(s.id)?'✓':i+1, cls, tap(s)), s.lng, s.lat);
+      });
+      far.forEach(s=>{
+        const cls = 'pin far' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'');
+        put(pinEl('★', cls, tap(s)), s.lng, s.lat);
+      });
+    }
+    if(pos){
+      if(!meMarker) meMarker = new maplibregl.Marker({element:pinEl('', 'me'), anchor:'center'});
+      meMarker.setLngLat([pos.lng, pos.lat]).addTo(map);
+    }
     const line = stops.map(s=>[s.lng, s.lat]);
-    const src = map.getSource('rt');
-    if(src) src.setData({type:'FeatureCollection', features: line.length>1 ? [{type:'Feature', geometry:{type:'LineString', coordinates:line}}] : []});
-    const placed = [];
-    const put = (el, lng, lat) => {   /* çok yakın iki durak üst üste binmesin */
-      const near = placed.filter(q=>dist({lat,lng},{lat:q[1],lng:q[0]}) < 40).length;
-      placed.push([lng,lat]);
-      mapMarkers.push(new maplibregl.Marker({element:el, anchor:'center', offset:[near*20, near*-20]}).setLngLat([lng,lat]).addTo(map));
-    };
-    stops.forEach((s,i)=>{
-      const cls = 'pin' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'');
-      put(pinEl(v.has(s.id)?'✓':i+1, cls, ()=>select(s.id)), s.lng, s.lat);
-    });
-    far.forEach(s=>{
-      const cls = 'pin far' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'');
-      put(pinEl('★', cls, ()=>select(s.id)), s.lng, s.lat);
-    });
-    if(pos) put(pinEl('', 'me'), pos.lng, pos.lat);
     if(needFit){
+      hidePop();
       const pts = line.concat(pos && mode!=='galata' && dist(pos, stops[0]) < 8000 ? [[pos.lng,pos.lat]] : []);
       if(pts.length){
         const bb = pts.reduce((b,p)=>b.extend(p), new maplibregl.LngLatBounds(pts[0], pts[0]));
-        map.fitBounds(bb, {padding:{top:46,bottom:46,left:46,right:46}, maxZoom:16, duration:0});
+        map.fitBounds(bb, {padding:{top:50,bottom:50,left:46,right:46}, maxZoom:16, duration:0});
       }
-      needFit = false;
+      needFit = false; lastSel = selected;
+    } else if(selected !== lastSel){
+      /* Seçilen durak haritada görünmüyorsa oraya kay */
+      lastSel = selected; const s = all().find(x=>x.id===selected);
+      if(s && !map.getBounds().contains([s.lng, s.lat])) map.easeTo({center:[s.lng,s.lat], duration:500});
     }
   }
-
+  function selectQuiet(id){
+    if(id!==selected){ Voice.stop(); storyOpen=false; }
+    selected = id; manual = true; App.refresh();
+  }
   function select(id){
     if(id!==selected){ Voice.stop(); storyOpen=false; }
     selected = id; manual = true; App.refresh(); window.scrollTo({top:0, behavior:'smooth'});
@@ -636,6 +683,10 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       else { useGalata(); manual=true; storyOpen=false; App.refresh(); window.scrollTo({top:0, behavior:'smooth'}); }
     };
     $('mapMe').onclick = () => { if(pos && map) map.easeTo({center:[pos.lng,pos.lat], zoom:16, duration:500}); };
+    $('mapFull').onclick = () => setFull(!document.body.classList.contains('mapfull'));
+    $('mapFit').onclick = () => { needFit = true; drawMap(); };
+    $('mapLoc').onclick = () => { if(pos && map) map.easeTo({center:[pos.lng,pos.lat], zoom:16, duration:500}); else locate(); };
+    document.addEventListener('keydown', e => { if(e.key==='Escape' && document.body.classList.contains('mapfull')) setFull(false); });
     $('saveRoute').onclick = () => {
       Journal.saveRoute({key:routeKey()+'-'+lang, place:placeName, center:center||{lat:GALATA[0].lat,lng:GALATA[0].lng},
                          stops, far, lang, mode});

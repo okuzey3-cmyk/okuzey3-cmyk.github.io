@@ -662,3 +662,35 @@ nav button[hidden]{display:none!important}
 .semtinfo h4{font-family:var(--serif);font-size:22px;font-weight:600;margin-bottom:8px}
 .semtinfo p{font-size:15px;line-height:1.65;color:var(--ink2)}
 .semtinfo small{display:block;margin-top:10px;font-size:12px;color:var(--ink3)}
+
+/* Harita: kontroller, bilgi kartı, tam ekran */
+.mapcard{position:relative}
+.mapctl{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.mapctl button{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:rgba(20,16,15,.82);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);color:#fff}
+.mapctl svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mapctl button:active{transform:scale(.94)}
+.pin{cursor:pointer;transition:transform .15s}
+.pin.sel{transform:scale(1.25);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 30%,transparent),0 6px 14px -4px rgba(0,0,0,.6)}
+.pin.gizli:not(.sel):not(.visited){border-color:#e9c46a}
+.mappop{position:absolute;left:12px;right:12px;bottom:12px;z-index:4;display:flex;gap:12px;align-items:center;padding:10px;border-radius:20px;
+  background:rgba(22,18,20,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 18px 40px -16px rgba(0,0,0,.7);animation:popin .22s ease-out}
+@keyframes popin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.mappop{animation:none}}
+.mappop .ph{flex:none;width:72px;height:72px;border-radius:14px;background:#2a2226 center/cover}
+.mappop .ph.ltr{display:grid;place-items:center;font-family:var(--serif);font-size:32px;color:rgba(255,255,255,.35)}
+.mappop .tx{min-width:0;flex:1}
+.mappop .tx b{display:block;font-size:16px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:24px}
+.mappop .tx span{display:block;margin-top:2px;font-size:13px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mappop .bt{display:flex;gap:8px;margin-top:8px}
+.mappop .bt>*{flex:1;text-align:center;padding:8px 0;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none}
+.mappop .go1{background:var(--accent);color:#fff}
+.mappop .go2{background:rgba(255,255,255,.09);color:#fff}
+.mappop .x{position:absolute;top:6px;right:8px;width:28px;height:28px;font-size:20px;line-height:1;color:var(--ink3)}
+body.mapfull .mapcard{position:fixed;inset:0;z-index:60;margin:0;border-radius:0}
+body.mapfull #map{height:100%!important}
+body.mapfull .mapctl{top:calc(14px + env(safe-area-inset-top))}
+body.mapfull .mappop{bottom:calc(16px + env(safe-area-inset-bottom))}
+body.mapfull nav,body.mapfull .fab{display:none!important}
+body.mapfull .mapcard{background:#14100f}
