@@ -41,7 +41,12 @@ const Gezi = (() => {
                 'tramvay','tramvayı','metro','metrosu','hattı','füniküler','teleferik','marmaray','metrobüs','otobüs','otogar','tram','line','railway','funicular','bus','ferry line'];
   const TRANSIT = /tramvay|tram\b|metro|metrobüs|marmaray|füniküler|funicular|teleferik|istasyon|station|durağı|durak\b|otobüs|otogar|hattı|\bline\b|railway/i;
 
+  /* Olaylar yer değildir: saldırı, kaza, deprem, yangın, maç, seçim gibi maddeler ve yılla başlayan başlıklar asla gösterilmez */
+  const EVENT = /saldırı|saldırısı|bombalama|bombalı|patlama|patlaması|terör|suikast|katliam|cinayet|kaza|kazası|deprem|yangın|yangını|sel felaketi|selleri|çöküşü|göçük|isyan|ayaklanma|olayları|olayı|protesto|darbe|savaş|muharebe|kuşatması|seçim|maçı|derbisi|turnuvası|şampiyonası|festivali|konseri|attack|bombing|explosion|massacre|murder|shooting|crash|earthquake|fire\b|riot|protest|election|match|tournament|championship|siege|battle|disaster|collapse|incident/i;
+  const PLACEW = /müze|museum|anıtı?\b|memorial|şehitliği|camii|mescidi|kilisesi|church|sarayı|palace|kalesi|castle|parkı|park\b|meydanı|square|köprüsü|bridge|kulesi|tower/i;
+  const isEvent = (title, more) => /^\s*\d{3,4}\b/.test(title) || (!PLACEW.test(title) && (EVENT.test(title) || (more ? EVENT.test(more) : false))) || (!PLACEW.test(title) && /\b(1[0-9]|20)\d{2}\b/.test(title));
   function isSight(title){
+    if(isEvent(title)) return false;
     const t = ' '+title.toLocaleLowerCase(lang==='tr'?'tr':'en');
     if(TRANSIT.test(title)) return false;
     return !/ (mahallesi|köyü|ilçesi|beldesi|seçim bölgesi)$| \((mahalle|ilçe)\)$/i.test(t) && !/^(.*) (neighbourhood|district)$/i.test(t);
@@ -188,7 +193,7 @@ const Gezi = (() => {
       return ((await r.json()).elements||[]).map(e=>{
         const t = e.tags||{}, la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, k = osmKind(t);
         if(!la || !lo || !k || !t.name) return null;
-        if(t.railway || t.public_transport || t.highway || t.route || /^(tram|railway|vehicle|aircraft|locomotive|milestone|boundary_stone)$/.test(t.historic||'') || TRANSIT.test(t.name)) return null;
+        if(isEvent(t.name) || t.railway || t.public_transport || t.highway || t.route || /^(tram|railway|vehicle|aircraft|locomotive|milestone|boundary_stone)$/.test(t.historic||'') || TRANSIT.test(t.name)) return null;
         if(/^(yes|no)$/i.test(t.name) || seen.has(t.name.toLowerCase())) return null; seen.add(t.name.toLowerCase());
         const strong = !!(/^(mesire|baraj|plaj|doga|gol)$/.test(k) || t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
         return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong};
@@ -238,7 +243,8 @@ const Gezi = (() => {
         return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title, [lang]:t};
       };
       center = {lat, lng};
-      const wikiStops = near.map(x=>make(x,false)).filter(s=>!TRANSIT.test((s[lang]||{}).kisa||''));
+      const wikiStops = near.map(x=>make(x,false)).filter(s=>{ const t = s[lang]||{};
+        return !TRANSIT.test(t.kisa||'') && !isEvent(t.ad||'', (t.kisa||'')+' '+String(t.metin||'').split(/[.!?]/)[0]); });
       /* OpenStreetMap yerleri: Vikipedi'dekilerle çakışanları ele, sıradan camilerden en fazla 3 al */
       const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
       const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
