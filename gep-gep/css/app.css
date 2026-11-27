@@ -665,7 +665,7 @@ nav button[hidden]{display:none!important}
 
 /* Harita: kontroller, bilgi kartı, tam ekran */
 .mapcard{position:relative}
-.mapctl{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:8px;z-index:3}
+.mapctl{position:absolute;top:12px;right:12px;display:flex;flex-direction:row;gap:8px;z-index:3}
 .mapctl button{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:rgba(20,16,15,.82);
   backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);color:#fff}
 .mapctl svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -694,3 +694,17 @@ body.mapfull .mapctl{top:calc(14px + env(safe-area-inset-top))}
 body.mapfull .mappop{bottom:calc(16px + env(safe-area-inset-bottom))}
 body.mapfull nav,body.mapfull .fab{display:none!important}
 body.mapfull .mapcard{background:#14100f}
+
+/* Fotoğraflı durak işaretleri */
+.pin.ph{width:42px;height:42px;padding:0;position:relative;border-width:2.5px;overflow:visible;background:#1d1822}
+.pin.ph i{position:absolute;inset:0;border-radius:50%;background:center/cover}
+.pin.ph em{position:absolute;right:-5px;bottom:-5px;min-width:19px;height:19px;padding:0 4px;border-radius:10px;background:var(--accent);
+  color:#fff;font:700 11px/19px var(--sans,system-ui);font-style:normal;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.pin.ph.sel{transform:scale(1.3)}
+/* Konum noktası nabız gibi atar */
+.me{position:relative}
+.me::after{content:"";position:absolute;inset:-9px;border-radius:50%;background:rgba(47,124,246,.35);animation:mepulse 2.2s ease-out infinite}
+@keyframes mepulse{from{transform:scale(.5);opacity:.9}to{transform:scale(2.1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.me::after{animation:none;opacity:.3}}
+#mapTour.on{background:var(--accent);border-color:transparent}
+#mapTour svg{fill:currentColor;stroke:none}

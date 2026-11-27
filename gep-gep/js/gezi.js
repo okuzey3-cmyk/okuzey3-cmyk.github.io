@@ -339,22 +339,53 @@ const Gezi = (() => {
         }
       }
     });
+    /* 3B binalar: yakınlaşınca yükselir, yükseklik arttıkça sıcak tona döner */
+    const firstSym = st.layers.findIndex(l=>l.type==='symbol');
+    const b3d = {id:'b3d', type:'fill-extrusion', source:'openmaptiles', 'source-layer':'building', minzoom:14.5,
+      paint:{'fill-extrusion-color':['interpolate',['linear'],['coalesce',['get','render_height'],8],0,'#2b221f',25,'#3a2c26',80,'#523b30'],
+        'fill-extrusion-height':['interpolate',['linear'],['zoom'],14.5,0,15.6,['coalesce',['get','render_height'],8]],
+        'fill-extrusion-base':['coalesce',['get','render_min_height'],0], 'fill-extrusion-opacity':.88}};
+    if(st.sources && st.sources.openmaptiles) st.layers.splice(firstSym<0?st.layers.length:firstSym, 0, b3d);
     return st;
+  }
+  const calm = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function flyStop(s, ms){
+    if(!map) return;
+    map.flyTo({center:[s.lng,s.lat], zoom:17.2, pitch:calm()?0:58, bearing:calm()?0:(map.getBearing()+18)%360,
+      duration:calm()?0:(ms||1600), essential:true, padding:{bottom:120}});
+  }
+  /* Turu izle: kamera durakları sırayla gezer; haritaya dokununca durur */
+  let tourT = null;
+  function stopTour(){ if(tourT){ clearTimeout(tourT); tourT = null; } const b=$('mapTour'); if(b) b.classList.remove('on'); }
+  function playTour(){
+    if(tourT){ stopTour(); return; }
+    if(!stops.length || !map) return;
+    setFull(true); $('mapTour').classList.add('on');
+    let i = 0;
+    const step = () => {
+      if(i >= stops.length){ stopTour(); hidePop(); map.easeTo({pitch:0, bearing:0, duration:900}); needFit = true; setTimeout(drawMap, 950); return; }
+      const s = stops[i++]; selectQuiet(s.id); flyStop(s, 2200);
+      tourT = setTimeout(()=>{ showPop(s); tourT = setTimeout(step, 3600); }, 2300);
+    };
+    step();
   }
   function initMap(){
     if(map || !window.maplibregl) return;
     map = new maplibregl.Map({container:'map', style:FALLBACK_STYLE, center:[28.9741, 41.0256], zoom:15, minZoom:11, maxZoom:18.5,
-      attributionControl:false, dragRotate:false, pitchWithRotate:false, fadeDuration:0});
+      attributionControl:false, dragRotate:false, pitchWithRotate:true, maxPitch:65, fadeDuration:0});
     map.touchZoomRotate.disableRotation();
     map.addControl(new maplibregl.AttributionControl({compact:true,
       customAttribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}));
     const addLine = () => {
       if(map.getSource('rt')) return;
       map.addSource('rt', {type:'geojson', data:{type:'FeatureCollection', features:[]}});
+      map.addLayer({id:'rtglow', type:'line', source:'rt', layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':'#e8794a', 'line-width':12, 'line-opacity':.16, 'line-blur':6}});
       map.addLayer({id:'rt', type:'line', source:'rt', layout:{'line-cap':'round','line-join':'round'},
         paint:{'line-color':'#e8794a', 'line-width':3.5, 'line-opacity':.9, 'line-dasharray':[0.4, 2.2]}});
     };
     map.on('click', () => hidePop());
+    ['dragstart','zoomstart'].forEach(ev=>map.on(ev, e=>{ if(e.originalEvent) stopTour(); }));
     map.on('load', () => {
       addLine(); mapReady = true; drawMap();
       darkStyle().then(st => { map.setStyle(st); map.once('styledata', ()=>{ const t=setInterval(()=>{ if(map.isStyleLoaded()){ clearInterval(t); addLine(); drawMap(); } }, 60); setTimeout(()=>clearInterval(t), 6000); }); }).catch(()=>{});
@@ -379,8 +410,8 @@ const Gezi = (() => {
       <div class="tx"><b>${esc(t.ad)}</b><span>${s.gizli?'★ ':''}${esc(t.kisa||'')}${d?' · '+d:''}</span>
         <div class="bt"><button class="go1">${esc(u.listen||'Dinle')}</button><a class="go2" target="_blank" rel="noopener" href="${walkLink(s)}">${esc(u.directions||'Yol tarifi')}</a></div></div>`;
     box.hidden = false; popOpen = true;
-    box.querySelector('.x').onclick = e => { e.stopPropagation(); hidePop(); };
-    box.querySelector('.go1').onclick = () => { hidePop(); setFull(false); if(selected!==s.id){ Voice.stop(); storyOpen=false; } selected=s.id; manual=true; App.refresh();
+    box.querySelector('.x').onclick = e => { e.stopPropagation(); stopTour(); hidePop(); };
+    box.querySelector('.go1').onclick = () => { stopTour(); hidePop(); setFull(false); if(selected!==s.id){ Voice.stop(); storyOpen=false; } selected=s.id; manual=true; App.refresh();
       window.scrollTo({top:0, behavior:'smooth'}); setTimeout(()=>play(s.id), 350); };
   }
   function hidePop(){ const b=$('mapPop'); if(b) b.hidden = true; popOpen = false; }
@@ -412,10 +443,11 @@ const Gezi = (() => {
         placed.push([lng,lat]);
         mapMarkers.push(new maplibregl.Marker({element:el, anchor:'center', offset:[near*20, near*-20]}).setLngLat([lng,lat]).addTo(map));
       };
-      const tap = s => () => { selectQuiet(s.id); showPop(s); map.easeTo({center:[s.lng,s.lat], duration:400}); };
+      const tap = s => () => { stopTour(); selectQuiet(s.id); showPop(s); flyStop(s); };
       stops.forEach((s,i)=>{
         const cls = 'pin' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'') + (s.gizli?' gizli':'');
-        put(pinEl(v.has(s.id)?'✓':i+1, cls, tap(s)), s.lng, s.lat);
+        const inner = s.img && !v.has(s.id) ? `<i style="background-image:url('${esc(s.img)}')"></i><em>${i+1}</em>` : (v.has(s.id)?'✓':i+1);
+        put(pinEl(inner, cls + (s.img && !v.has(s.id) ? ' ph' : ''), tap(s)), s.lng, s.lat);
       });
       far.forEach(s=>{
         const cls = 'pin far' + (v.has(s.id)?' visited':'') + (s.id===selected?' sel':'');
@@ -683,8 +715,9 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       else { useGalata(); manual=true; storyOpen=false; App.refresh(); window.scrollTo({top:0, behavior:'smooth'}); }
     };
     $('mapMe').onclick = () => { if(pos && map) map.easeTo({center:[pos.lng,pos.lat], zoom:16, duration:500}); };
-    $('mapFull').onclick = () => setFull(!document.body.classList.contains('mapfull'));
-    $('mapFit').onclick = () => { needFit = true; drawMap(); };
+    $('mapFull').onclick = () => { const on = !document.body.classList.contains('mapfull'); if(!on) stopTour(); setFull(on); };
+    $('mapFit').onclick = () => { stopTour(); hidePop(); map.easeTo({pitch:0, bearing:0, duration:calm()?0:500}); needFit = true; setTimeout(drawMap, calm()?0:520); };
+    $('mapTour').onclick = () => playTour();
     $('mapLoc').onclick = () => { if(pos && map) map.easeTo({center:[pos.lng,pos.lat], zoom:16, duration:500}); else locate(); };
     document.addEventListener('keydown', e => { if(e.key==='Escape' && document.body.classList.contains('mapfull')) setFull(false); });
     $('saveRoute').onclick = () => {
