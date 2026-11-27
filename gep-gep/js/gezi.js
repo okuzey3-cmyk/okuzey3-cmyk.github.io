@@ -36,11 +36,13 @@ const Gezi = (() => {
                   'cave','canyon','waterfall','national park','ancient','ruins','castle','fortress','lake'];
   const SKIP = ['mahallesi','köyü','ilçesi','lisesi','okulu','ilkokulu','ortaokulu','üniversitesi','fakültesi','istasyonu','durağı',
                 'hastanesi','stadyumu','spor','kulübü','belediyesi','seçim','barajı','havalimanı','otoyol','caddesi','sokağı','apartmanı',
-                'neighbourhood','district','school','university','station','hospital','stadium','club','airport','street'];
+                'neighbourhood','district','school','university','station','hospital','stadium','club','airport','street',
+                'tramvay','tramvayı','metro','metrosu','hattı','füniküler','teleferik','marmaray','metrobüs','otobüs','otogar','tram','line','railway','funicular','bus','ferry line'];
+  const TRANSIT = /tramvay|tram\b|metro|metrobüs|marmaray|füniküler|funicular|teleferik|istasyon|station|durağı|durak\b|otobüs|otogar|hattı|\bline\b|railway/i;
 
   function isSight(title){
     const t = ' '+title.toLocaleLowerCase(lang==='tr'?'tr':'en');
-    if(SKIP.some(w=>t.includes(' '+w))) return false;
+    if(SKIP.some(w=>t.includes(' '+w)) || TRANSIT.test(title)) return false;
     return KEYS.tr.some(w=>t.includes(w)) || KEYS.en.some(w=>t.includes(' '+w));
   }
   const weight = title => { const t = title.toLocaleLowerCase('tr'); return STRONG.some(w=>t.includes(w)) ? 1 : 0; };
@@ -162,12 +164,14 @@ const Gezi = (() => {
       const q = `[out:json][timeout:12];(nwr${a}["name"]["amenity"="place_of_worship"];nwr${a}["name"]["historic"];`
         + `nwr${a}["name"]["tourism"~"^(attraction|museum|viewpoint|artwork|gallery)$"];nwr${a}["name"]["leisure"~"^(park|garden)$"];`
         + `nwr${a}["name"]["man_made"~"^(pier|lighthouse|tower)$"];);out center tags 150;`;
-      const r = await fetch('https://overpass-api.de/api/interpreter', {method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+      const ac = new AbortController(); setTimeout(()=>ac.abort(), 6000);
+      const r = await fetch('https://overpass-api.de/api/interpreter', {signal:ac.signal, method:'POST', body:'data='+encodeURIComponent(q), headers:{'Content-Type':'application/x-www-form-urlencoded'}});
       if(!r.ok) return [];
       const seen = new Set();
       return ((await r.json()).elements||[]).map(e=>{
         const t = e.tags||{}, la = e.lat ?? e.center?.lat, lo = e.lon ?? e.center?.lon, k = osmKind(t);
         if(!la || !lo || !k || !t.name) return null;
+        if(t.railway || t.public_transport || t.highway || t.route || /^(tram|railway|vehicle|aircraft|locomotive|milestone|boundary_stone)$/.test(t.historic||'') || TRANSIT.test(t.name)) return null;
         if(/^(yes|no)$/i.test(t.name) || seen.has(t.name.toLowerCase())) return null; seen.add(t.name.toLowerCase());
         const strong = !!(t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
         return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong};
@@ -215,7 +219,7 @@ const Gezi = (() => {
         return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title, [lang]:t};
       };
       center = {lat, lng};
-      const wikiStops = near.map(x=>make(x,false));
+      const wikiStops = near.map(x=>make(x,false)).filter(s=>!TRANSIT.test((s[lang]||{}).kisa||''));
       /* OpenStreetMap yerleri: Vikipedi'dekilerle çakışanları ele, sıradan camilerden en fazla 3 al */
       const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
       const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
@@ -277,19 +281,33 @@ const Gezi = (() => {
   }
 
   /* ---------- Konum ---------- */
+  /* Konum: önce hızlı kaba konum (Wi-Fi/baz), sonra hassas GPS. Zaman aşımı "izin yok" sayılmaz, tekrar denenir. */
+  function gotPos(p){
+    const fresh = !pos;
+    pos = {lat:p.coords.latitude, lng:p.coords.longitude}; geoState='on';
+    Store.set('lastpos', {lat:pos.lat, lng:pos.lng, t:Date.now()});
+    Sky.setLocation && Sky.setLocation(pos);
+    if(fresh && !picked && (!center || placeName==='Galata')) loadNear(pos.lat, pos.lng);
+    checkArrival();
+    if(!manual && !Voice.id && !loadingNear) selected = autoPick();
+    if(App.tab==='gezi') App.refresh();
+  }
   function locate(){
     if(!navigator.geolocation){ geoState='denied'; return App.refresh(); }
     if(watching) return;
     geoState='wait'; App.refresh(); watching = true;
-    let first = true;
-    navigator.geolocation.watchPosition(p=>{
-      pos = {lat:p.coords.latitude, lng:p.coords.longitude}; geoState='on';
-      Sky.setLocation && Sky.setLocation(pos);
-      if(first){ first=false; if(!picked && (!center || placeName==='Galata')) loadNear(pos.lat, pos.lng); }
-      checkArrival();
-      if(!manual && !Voice.id && !loadingNear) selected = autoPick();
-      if(App.tab==='gezi') App.refresh();
-    }, ()=>{ geoState='denied'; watching=false; App.refresh(); }, {enableHighAccuracy:true, maximumAge:10000, timeout:20000});
+    /* Son bilinen konum yarım saatten yeniyse hemen onunla başla */
+    const last = Store.get('lastpos', null);
+    if(!pos && last && Date.now()-last.t < 30*60e3) gotPos({coords:{latitude:last.lat, longitude:last.lng}});
+    const fail = e => {
+      if(e && e.code===1){ geoState='denied'; watching=false; App.refresh(); return; }
+      if(!pos){ geoState='wait'; App.refresh(); }
+    };
+    navigator.geolocation.getCurrentPosition(gotPos, ()=>{}, {enableHighAccuracy:false, maximumAge:300000, timeout:6000});
+    const watch = () => navigator.geolocation.watchPosition(gotPos, e=>{
+      fail(e); if(e && e.code!==1){ navigator.geolocation.clearWatch(wid); setTimeout(()=>{ wid = watch(); }, 2500); }
+    }, {enableHighAccuracy:true, maximumAge:5000, timeout:15000});
+    let wid = watch();
   }
 
   function checkArrival(){
