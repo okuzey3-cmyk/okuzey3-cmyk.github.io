@@ -196,9 +196,48 @@ const Gezi = (() => {
         if(isEvent(t.name) || t.railway || t.public_transport || t.highway || t.route || /^(tram|railway|vehicle|aircraft|locomotive|milestone|boundary_stone)$/.test(t.historic||'') || TRANSIT.test(t.name)) return null;
         if(/^(yes|no)$/i.test(t.name) || seen.has(t.name.toLowerCase())) return null; seen.add(t.name.toLowerCase());
         const strong = !!(/^(mesire|baraj|plaj|doga|gol)$/.test(k) || t.wikipedia || t.wikidata || (t.historic && k!=='anit') || k==='muze' || k==='gezi' || k==='manzara' || k==='iskele');
-        return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong};
+        /* Sıradan yerler (isimli her park, her mahalle camisi, su kulesi) ancak tarihî ya da kayıtlı ise girer */
+        const notable = !!(t.wikipedia || t.wikidata || t.historic || t.heritage || t.start_date || t.architect || t.tourism);
+        if((k==='park' || k==='kule' || k==='kultur' || k==='carsi') && !notable) return null;
+        if((k==='cami' || k==='ibadet' || k==='cesme') && !notable && !/tarihi|tarihî|eski|historic/i.test(t.name)) return { _plain:true, id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:'', strong:false, tags:t };
+        return {id:'o'+e.type[0]+e.id, lat:la, lng:lo, title:t.name, kind:k, wp:t.wikipedia||'', strong, tags:t};
       }).filter(Boolean);
     }catch(e){ return []; }
+  }
+
+  /* ---------- Vikidata: madde gerçekten gezilebilir bir YER mi? Ne kadar tanınıyor? ----------
+     Olay (saldırı, kaza, savaş, seçim...), insan, idari bölge, yerleşim, istasyon, cadde/yol, hat, şirket, spor kulübü dışarıda.
+     Tanınırlık: kaç dilde Vikipedi maddesi olduğu (az dilde = az bilinen, gizli kalmış yer). */
+  /* Kesin dışarıda: olay, insan, idari bölge, yerleşim, cadde, yol, hat, tekrarlı etkinlik, liste/anlam ayrımı sayfaları */
+  const NOT_PLACE = ['Q1190554','Q5','Q56061','Q486972','Q79007','Q34442','Q728937','Q15275719','Q13406463','Q4167410','Q17442446'];
+  /* Yumuşak: istasyon, spor kulübü — ama çok tanınıyorsa (Haydarpaşa, Sirkeci gibi) kalır */
+  const SOFT_NOT = ['Q12819564','Q847017'];
+  async function wdCheck(pageids){
+    const out = {};
+    try{
+      const qids = {};
+      for(let i=0;i<pageids.length;i+=50){
+        const j = await wiki({action:'query', pageids:pageids.slice(i,i+50).join('|'), prop:'pageprops', ppprop:'wikibase_item'});
+        (j.query?.pages||[]).forEach(p=>{ const q = p.pageprops?.wikibase_item; if(q) qids[q] = p.pageid; });
+      }
+      const list = Object.keys(qids); if(!list.length) return null;
+      const ac = new AbortController(); setTimeout(()=>ac.abort(), 8000);
+      const sparql = `SELECT ?i ?sl ?bad ?soft WHERE { VALUES ?i { ${list.map(q=>'wd:'+q).join(' ')} }
+        OPTIONAL { ?i wikibase:sitelinks ?sl }
+        OPTIONAL { VALUES ?b { ${NOT_PLACE.map(q=>'wd:'+q).join(' ')} } ?i wdt:P31/wdt:P279* ?b . BIND(1 AS ?bad) }
+        OPTIONAL { VALUES ?s { ${SOFT_NOT.map(q=>'wd:'+q).join(' ')} } ?i wdt:P31/wdt:P279* ?s . BIND(1 AS ?soft) } }`;
+      const r = await fetch('https://query.wikidata.org/sparql?format=json&query='+encodeURIComponent(sparql), {signal:ac.signal, headers:{Accept:'application/sparql-results+json'}});
+      if(!r.ok) return null;
+      ((await r.json()).results?.bindings||[]).forEach(b=>{
+        const q = b.i.value.split('/').pop(), id = qids[q]; if(!id) return;
+        const o = out[id] || (out[id] = {sl:0, bad:false, soft:false});
+        if(b.sl) o.sl = Math.max(o.sl, +b.sl.value);
+        if(b.bad) o.bad = true;
+        if(b.soft) o.soft = true;
+      });
+      Object.values(out).forEach(o=>{ if(o.soft && o.sl < 10) o.bad = true; });
+      return out;
+    }catch(e){ return null; }
   }
 
   async function loadNear(lat, lng, label){
@@ -209,7 +248,9 @@ const Gezi = (() => {
     try{
       const osmP = osmPlaces(lat, lng);
       const g = await wiki({action:'query', list:'geosearch', gscoord:`${lat}|${lng}`, gsradius:10000, gslimit:200});
-      const c = (g.query?.geosearch||[]).filter(x=>isSight(x.title));
+      let c = (g.query?.geosearch||[]).filter(x=>isSight(x.title)).sort((a,b)=>a.dist-b.dist).slice(0,120);
+      const wd = await wdCheck(c.map(x=>x.pageid));
+      if(wd){ c = c.filter(x=>!(wd[x.pageid]||{}).bad); c.forEach(x=>{ x.sl = (wd[x.pageid]||{}).sl||0; }); }
       let near = c.filter(x=>x.dist<=3000);
       if(near.length < 4) near = c.filter(x=>x.dist<=6000);
       if(near.length < 3) near = c;
@@ -240,7 +281,8 @@ const Gezi = (() => {
         const pg = pages.find(p=>p.pageid===x.pageid)||{};
         const t = {ad:x.title, kisa:pg.description||'', metin:cleanExtract(pg.extract)||x.title};
         const inf = pg.thumbnail && infos[nmz(pg.pageimage)];
-        return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title, [lang]:t};
+        return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title,
+          gizli: wd ? (x.sl||0) <= 3 : false, unlu: (x.sl||0) >= 15, [lang]:t};
       };
       center = {lat, lng};
       const wikiStops = near.map(x=>make(x,false)).filter(s=>{ const t = s[lang]||{};
@@ -249,7 +291,7 @@ const Gezi = (() => {
       const nm = x => x.toLocaleLowerCase('tr').replace(/[^a-zçğıöşü0-9]/g,'');
       const fresh = osmAll.filter(o=>!wikiStops.some(w=>dist(o,w)<25 || nm(w.title).includes(nm(o.title)) || nm(o.title).includes(nm(w.title))))
         .map(o=>({...o, d:dist(o,{lat,lng})})).filter(o=>o.d<=(/^(mesire|baraj|plaj|doga|gol)$/.test(o.kind)?6000:3000)).sort((a,b)=>a.d-b.d);
-      const pick = fresh.slice(0, 50);
+      const pick = [...fresh.filter(o=>!o._plain), ...fresh.filter(o=>o._plain).slice(0,3)].sort((a,b)=>a.d-b.d).slice(0, 50);
       const wpTitle = {};   /* OSM'de wikipedia etiketi olanların metnini Vikipedi'den al */
       await Promise.all(pick.filter(o=>/^(tr|en):/.test(o.wp)).map(async o=>{ try{
         const [pre, ...rest] = o.wp.split(':'), j = await (await fetch(`https://${pre}.wikipedia.org/w/api.php?` + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*',
@@ -258,9 +300,17 @@ const Gezi = (() => {
       const osmStops = pick.map(o=>{
         const k = KIND[o.kind], ex = wpTitle[o.id];
         const where = label || (lang==='tr'?'bu çevrede':'in this area');
-        const tr = ex || `${o.title}, ${where} bulunan bir ${k.tr.toLocaleLowerCase('tr')}. Bu yer için ayrıntılı bir anlatım henüz yok; yerindeki bilgi levhasına ya da Vikipedi'ye bakabilirsin.`;
-        const en = ex || `${o.title} is a ${k.en.toLowerCase()} ${label?'in '+label:'in this area'}. There is no detailed story for it yet; check the information board on site or Wikipedia.`;
-        return {id:o.id, lat:o.lat, lng:o.lng, img:'', osm:true, far:false, title:o.title, [lang]:{ad:o.title, kisa:k[lang], metin: lang==='tr'?tr:en, rehber:!ex}};
+        const tg = o.tags||{}, yr = String(tg.start_date||'').match(/\d{3,4}/), yil = yr ? yr[0] : '';
+        const by = tg.architect || '', den = tg.denomination || '';
+        const trBits = [yil ? `${yil} yılında yapılmıştır.` : '', by ? `Mimarı ${by}.` : '', tg.heritage ? 'Koruma altındaki tarihî yapılardandır.' : '',
+                        tg.description || tg['description:tr'] || ''].filter(Boolean).join(' ');
+        const enBits = [yil ? `Built in ${yil}.` : '', by ? `Architect: ${by}.` : '', tg.heritage ? 'It is a protected heritage site.' : '',
+                        tg['description:en'] || ''].filter(Boolean).join(' ');
+        const tr = ex || `${o.title}, ${where} bulunan bir ${k.tr.toLocaleLowerCase('tr')}. ${trBits || 'Kalabalık rehberlerde pek yer almayan, çevrenin kendi köşelerinden biridir; yerindeki bilgi levhası hikâyesini anlatır.'}`;
+        const en = ex || `${o.title} is a ${k.en.toLowerCase()} ${label?'in '+label:'in this area'}. ${enBits || 'It rarely appears in the big guidebooks, one of the area\'s own corners; the sign on site tells its story.'}`;
+        const kisaTr = yil ? `${k.tr} · ${yil}` : k.tr, kisaEn = yil ? `${k.en} · ${yil}` : k.en;
+        return {id:o.id, lat:o.lat, lng:o.lng, img:'', osm:true, far:false, title:o.title, gizli:!o.wp,
+          [lang]:{ad:o.title, kisa: lang==='tr'?kisaTr:kisaEn, metin: lang==='tr'?tr:en, rehber:!ex}};
       });
       stops = orderRoute([...wikiStops, ...osmStops].slice(0,80), pos || center);
       far = farC.map(x=>make(x,true));
