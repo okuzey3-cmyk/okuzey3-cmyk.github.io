@@ -96,7 +96,7 @@ const Onb = (() => {
   }
   function finish(){
     if(done) return; done = true; Store.set('onb', 1);
-    el.classList.add('out'); setTimeout(() => { el.hidden = true; document.body.style.overflow = ''; }, 380);
+    el.classList.add('out'); setTimeout(() => { el.hidden = true; document.body.style.overflow = ''; if(GEP.features.includes('gezi')) Gezi.locate(); }, 380);
   }
   function swipe(){
     let x0 = null, y0 = null;

@@ -176,7 +176,7 @@
 <script src="js/gunluk.js"></script>
 <script src="js/acilis.js"></script>
 <script src="js/tema.js"></script>
-<script>App.start(); Onb.start();
+<script>App.start(); Onb.start(); if(Store.get('onb',0) && !/[?&]onb=1/.test(location.search) && GEP.features.includes('gezi')) Gezi.locate();
 document.getElementById('legalLink').textContent=(typeof lang!=='undefined'&&lang==='en')?'Privacy & sources':'Gizlilik ve kaynaklar';
 document.getElementById('legalLink').onclick=function(){openLegal();};
 document.getElementById('fab').onclick=function(){

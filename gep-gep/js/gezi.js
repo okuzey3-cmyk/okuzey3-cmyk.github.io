@@ -523,7 +523,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     if(mode==='near' && center) loadNear(center.lat, center.lng);
   }
 
-  return { init, render, play, share, langChanged, openSaved, enter(){ setTimeout(()=>map && map.resize(), 50); },
+  return { init, locate, render, play, share, langChanged, openSaved, enter(){ setTimeout(()=>map && map.resize(), 50); },
            get pos(){ return pos; }, toggleVisited };
 })();
 App.register('gezi', Gezi);
