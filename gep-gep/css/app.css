@@ -654,3 +654,11 @@ nav button[hidden]{display:none!important}
   border:1px solid rgba(255,255,255,.06);white-space:nowrap}
 .semt button.on{color:var(--bg);background:var(--accent);border-color:transparent}
 .semt button:active{transform:scale(.96)}
+
+.semt.sub{margin-top:2px}
+.semt.sub button{padding:7px 14px;font-size:13px;background:transparent;border:1px solid rgba(255,255,255,.14)}
+.semt.sub button.on{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.semtinfo{margin-top:12px;padding:18px 20px}
+.semtinfo h4{font-family:var(--serif);font-size:22px;font-weight:600;margin-bottom:8px}
+.semtinfo p{font-size:15px;line-height:1.65;color:var(--ink2)}
+.semtinfo small{display:block;margin-top:10px;font-size:12px;color:var(--ink3)}

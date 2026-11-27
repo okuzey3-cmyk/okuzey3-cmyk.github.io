@@ -80,17 +80,48 @@ const Gezi = (() => {
          + (mids.length?`&waypoints=${encodeURIComponent(mids.map(ll).join('|'))}`:'') + `&travelmode=${walk?'walking':'driving'}`;
   }
 
-  /* İstanbul semtleri: dokununca o semtin çevresindeki yerler açılır (Galata: elle yazılmış seçme rota) */
-  const SEMT = [['Galata',41.0256,28.9741],['Sultanahmet',41.0054,28.9768],['Taksim',41.0370,28.9850],['Beşiktaş',41.0430,29.0070],
-    ['Ortaköy',41.0476,29.0262],['Üsküdar',41.0255,29.0153],['Kadıköy',40.9906,29.0245],['Balat',41.0295,28.9486],['Eyüp',41.0480,28.9340],
-    ['Bakırköy',40.9795,28.8723],['Zeytinburnu',40.9930,28.9060],['Sarıyer',41.1668,29.0571],['Büyükada',40.8760,29.1290]];
+  /* İstanbul: ilçe → semt. Dokununca o çevrenin yerleri açılır (Galata: elle yazılmış seçme rota) */
+  const ILCE = [
+    ['Fatih',41.0190,28.9500,[['Sultanahmet',41.0054,28.9768],['Eminönü',41.0170,28.9700],['Süleymaniye',41.0160,28.9640],['Fener',41.0292,28.9490],['Balat',41.0295,28.9486],['Edirnekapı',41.0310,28.9390],['Yedikule',41.0000,28.9230]]],
+    ['Beyoğlu',41.0330,28.9780,[['Galata',41.0256,28.9741],['Karaköy',41.0225,28.9770],['Tünel',41.0310,28.9740],['Taksim',41.0370,28.9850],['Cihangir',41.0320,28.9830]]],
+    ['Beşiktaş',41.0430,29.0070,[['Beşiktaş',41.0430,29.0070],['Yıldız',41.0480,29.0140],['Ortaköy',41.0476,29.0262],['Arnavutköy',41.0640,29.0430],['Bebek',41.0770,29.0430]]],
+    ['Üsküdar',41.0255,29.0153,[['Üsküdar',41.0255,29.0153],['Kuzguncuk',41.0370,29.0300],['Beylerbeyi',41.0420,29.0420],['Çengelköy',41.0510,29.0510]]],
+    ['Kadıköy',40.9906,29.0245,[['Kadıköy',40.9906,29.0245],['Moda',40.9810,29.0260],['Haydarpaşa',41.0010,29.0200],['Fenerbahçe',40.9680,29.0360]]],
+    ['Bakırköy',40.9795,28.8723,[['Bakırköy',40.9795,28.8723],['Ataköy',40.9810,28.8480],['Yeşilköy',40.9600,28.8260],['Florya',40.9760,28.7880]]],
+    ['Zeytinburnu',40.9930,28.9060,[['Zeytinburnu',40.9930,28.9060],['Kazlıçeşme',40.9920,28.9140],['Merkezefendi',41.0040,28.9100]]],
+    ['Eyüpsultan',41.0480,28.9340,[['Eyüp',41.0480,28.9340],['Pierre Loti',41.0560,28.9330]]],
+    ['Sarıyer',41.1668,29.0571,[['Sarıyer',41.1668,29.0571],['Emirgan',41.1070,29.0540],['İstinye',41.1130,29.0580],['Rumeli Hisarı',41.0850,29.0560]]],
+    ['Adalar',40.8760,29.1290,[['Büyükada',40.8760,29.1290],['Heybeliada',40.8780,29.0980]]]
+  ];
+  let ilce = 'Beyoğlu', semtName = 'Galata';
+  const ilceOf = n => ILCE.find(i=>i[0]===n || i[3].some(s=>s[0]===n));
+  async function semtIntro(name, parent){
+    const ck = 'semtinfo-'+lang+'-'+name, hit = Store.get(ck, null); if(hit) return hit;
+    try{
+      const j = await wiki({action:'query', generator:'search', gsrsearch:`${name} İstanbul`, gsrlimit:4, prop:'extracts', exintro:1, explaintext:1, exlimit:'max'});
+      const key = String(name).toLocaleLowerCase('tr');
+      const pg = (j.query?.pages||[]).sort((a,b)=>a.index-b.index).find(p=>String(p.title).toLocaleLowerCase('tr').includes(key) && /İstanbul|Istanbul/.test(p.extract||''));
+      if(!pg) return null;
+      const out = {title:name, text:cleanExtract(pg.extract), url:`https://${lang}.wikipedia.org/wiki/${encodeURIComponent(pg.title.replace(/ /g,'_'))}`};
+      Store.set(ck, out); return out;
+    }catch(e){ return null; }
+  }
+  async function showIntro(name){
+    const box = $('semtInfo'); if(!box) return; const my = name; box.dataset.for = name;
+    const r = await semtIntro(name); if(box.dataset.for !== my) return;
+    if(!r || !r.text){ box.hidden = true; return; }
+    box.hidden = false; box.innerHTML = `<h4>${esc(r.title)}</h4><p>${esc(r.text)}</p><small><a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(T().src)}</a></small>`;
+  }
   function renderSemt(){
-    const el = $('semt'); if(!el) return;
-    el.innerHTML = SEMT.map(([n])=>`<button data-semt="${n}" class="${placeName===n?'on':''}">${n}</button>`).join('');
-    el.querySelectorAll('button').forEach(b=>b.onclick = () => {
-      const x = SEMT.find(s=>s[0]===b.dataset.semt); if(!x) return;
-      Voice.stop(); manual = false; storyOpen = false; loadNear(x[1], x[2], x[0]); window.scrollTo({top:0, behavior:'smooth'});
-    });
+    const el = $('semt'), el2 = $('semt2'); if(!el) return;
+    const cur = ilceOf(placeName); if(cur) ilce = cur[0];
+    const sk = ilce+'|'+placeName+'|'+lang; if(sk === renderSemt.last) return; renderSemt.last = sk; showIntro(placeName);
+    const ic = ILCE.find(i=>i[0]===ilce) || ILCE[1];
+    el.innerHTML = ILCE.map(([n])=>`<button data-ilce="${n}" class="${ic[0]===n?'on':''}">${n}</button>`).join('');
+    el2.innerHTML = ic[3].map(([n])=>`<button data-semt="${n}" class="${placeName===n?'on':''}">${n}</button>`).join('');
+    const go = (n, la, lo) => { Voice.stop(); manual = false; storyOpen = false; semtName = n; loadNear(la, lo, n); showIntro(n); window.scrollTo({top:0, behavior:'smooth'}); };
+    el.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ILCE.find(i=>i[0]===b.dataset.ilce); ilce = x[0]; go(x[0], x[1], x[2]); });
+    el2.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ic[3].find(s=>s[0]===b.dataset.semt); go(x[0], x[1], x[2]); });
   }
   function useGalata(){ stops=GALATA; far=[]; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; needFit=true; }
 
@@ -136,7 +167,7 @@ const Gezi = (() => {
 
   async function loadNear(lat, lng, label){
     if(!GEP.nearWeb){ useGalata(); manual=false; return App.refresh(); }   /* Vikipedi'den yakın yer çekme kapalı (ticari temizlik) */
-    if(dist({lat,lng}, GALATA[0]) < 1500){ useGalata(); manual=false; return App.refresh(); }
+    if(label==='Galata' || (!label && dist({lat,lng}, GALATA[0]) < 1500)){ useGalata(); manual=false; return App.refresh(); }
     loadingNear=true; netErr=false; Voice.stop(); App.refresh();
     try{
       const osmP = osmPlaces(lat, lng);
