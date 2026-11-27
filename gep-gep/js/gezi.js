@@ -125,10 +125,10 @@ const Gezi = (() => {
   function renderSemt(){
     const el = $('semt'), el2 = $('semt2'); if(!el) return;
     const cur = ilceOf(placeName); if(cur) ilce = cur[0];
-    const sk = ilce+'|'+placeName+'|'+lang; if(sk === renderSemt.last) return; renderSemt.last = sk; showIntro(placeName);
+    const fd = finding(); const sk = ilce+'|'+placeName+'|'+lang+'|'+fd; if(sk === renderSemt.last) return; renderSemt.last = sk; if(fd){ const bx=$('semtInfo'); if(bx){ bx.hidden=true; bx.dataset.for=''; } } else showIntro(placeName);
     const ic = ILCE.find(i=>i[0]===ilce) || ILCE[1];
-    el.innerHTML = ILCE.map(([n])=>`<button data-ilce="${n}" class="${ic[0]===n?'on':''}">${n}</button>`).join('');
-    el2.innerHTML = ic[3].map(([n])=>`<button data-semt="${n}" class="${placeName===n?'on':''}">${n}</button>`).join('');
+    el.innerHTML = ILCE.map(([n])=>`<button data-ilce="${n}" class="${ic[0]===n&&!fd?'on':''}">${n}</button>`).join('');
+    el2.innerHTML = ic[3].map(([n])=>`<button data-semt="${n}" class="${placeName===n&&!fd?'on':''}">${n}</button>`).join('');
     const go = (n, la, lo) => { picked = true; Voice.stop(); manual = false; storyOpen = false; semtName = n; loadNear(la, lo, n); showIntro(n); window.scrollTo({top:0, behavior:'smooth'}); };
     el.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ILCE.find(i=>i[0]===b.dataset.ilce); ilce = x[0]; go(x[0], x[1], x[2]); });
     el2.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ic[3].find(s=>s[0]===b.dataset.semt); go(x[0], x[1], x[2]); });
@@ -607,12 +607,17 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
 
   /* ---------- Çizim ---------- */
   let lastKey = '';
+  const finding = () => !picked && placeName==='Galata' && (loadingNear || (geoState==='wait' && !pos));
   function render(){
     const u = T(), v = visited();
-    $('place').textContent = placeName;
-    $('eyebrow').textContent = mode==='galata' ? u.eyebrow : u.eyebrowNear;
     const km = routeLength();
-    $('intro').textContent = placeName==='Galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
+    if(finding()){   /* Konum aranırken Galata yazmasın */
+      $('place').textContent = u.findTitle; $('eyebrow').textContent = u.findEyebrow; $('intro').textContent = u.findIntro;
+    } else {
+      $('place').textContent = placeName;
+      $('eyebrow').textContent = mode==='galata' ? u.eyebrow : u.eyebrowNear;
+      $('intro').textContent = placeName==='Galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
+    }
     $('routeTitle').textContent = u.route; $('routeMeta').textContent = u.stopsN(stops.length);
     $('mapTitle').textContent = u.mapTitle; $('mapMe').textContent = pos ? u.mapMe : '';
     renderSemt();
