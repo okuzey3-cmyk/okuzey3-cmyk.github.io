@@ -2,4 +2,4 @@
 const GEP = { proxy: 'https://gepgep-ai.okuzey3.workers.dev', cartoKey: '', contact: 'oyunlaricin1905t@gmail.com',
   /* Açık özellikler. Temizlenip denetlenenler buraya eklenir: 'gezi','sky','shop','log' */
   features: ['gezi','sky'],
-  nearWeb: false   /* true olursa Vikipedi'den yakın yer çekilir; ticari temizlik bitene kadar kapalı */ };
+  nearWeb: true };

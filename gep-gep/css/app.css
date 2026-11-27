@@ -111,7 +111,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .twin{display:flex;gap:10px;margin-top:10px}
 .ghost{flex:1;padding:13px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--ink2)}
 .ghost.done{color:var(--ok);border-color:var(--ok)}
-.sample{display:block;margin:22px auto 0;font-size:14px;font-weight:600;color:var(--ink3)}
+.sample{display:block;margin:12px auto 0;padding:9px 18px;border-radius:99px;font-size:14px;font-weight:600;color:var(--accent);background:var(--accent-soft)}
+.sample:active{transform:scale(.97)}
 .sample:empty{display:none}
 
 /* ---------- Listeler ---------- */

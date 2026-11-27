@@ -40,14 +40,14 @@ const Onb = (() => {
       rows:[['Gezi','Tarihî bir yere kamerayı tut, hikâyesini dinle.'],['Gökyüzü','Telefonu göğe tut; Ay’ı, gezegenleri ve parlak yıldızları göstersin.']],
       p3:'Üç izin isteyeceğiz. Hepsi yalnızca işine yaradığında.',
       perm:[['Kamera','Sen “Kameraya tut” dediğinde açılır. Çektiğin kare, ne olduğunu anlamak için yapay zekaya gönderilir.'],
-            ['Konum','Yakındaki durakları ve doğru gökyüzünü göstermek için. Yalnızca yol tarifi istediğinde Google Haritalar’a iletilir. İstemezsen reddet, uygulama yine çalışır.'],
+            ['Konum','Yakındaki yerleri ve doğru gökyüzünü göstermek için. Yaklaşık konum yakın yerleri bulmak için Vikipedi’ye gider, yol tarifi istersen Google Haritalar’a iletilir. İstemezsen reddet, uygulama yine çalışır.'],
             ['Hareket sensörü','Telefonu göğe tuttuğunda yönü bulmak için. iPhone bir kez soracak.']] });
     Object.assign(TXT.en,{ h1:'The guide<br><em>in your pocket.</em>', p1:'Point at a place and hear its story. Point at the sky and get to know the stars.',
       h2:'One app,<br><em>two things.</em>',
       rows:[['Walk','Point at a landmark and hear its story.'],['Sky','Hold your phone up to find the Moon, the planets and the brightest stars.']],
       p3:'We’ll ask for three permissions, only when they help you.',
       perm:[['Camera','Opens only when you tap “Point the camera”. The frame you take is sent to an AI to work out what it is.'],
-            ['Location','To show nearby stops and the right sky. Only passed to Google Maps if you ask for directions. You can say no, the app still works.'],
+            ['Location','To show nearby places and the right sky. Your approximate location goes to Wikipedia to find places, and to Google Maps if you ask for directions. You can say no, the app still works.'],
             ['Motion sensor','To find the direction when you hold the phone up. iPhone will ask once.']] });
   }
   const I = {

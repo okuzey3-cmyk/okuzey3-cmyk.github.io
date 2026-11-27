@@ -24,10 +24,12 @@ const Gezi = (() => {
         'kule','kulesi','anıt','anıtı','tekke','dergâh','dergahı','kervansaray','şelale','şelalesi','kanyon','kanyonu','gölü',
         'tabiat parkı','milli park','millî park','antik','tiyatro','tiyatrosu','ören','höyük','höyüğü','konak','konağı','köşk','köşkü','kasrı',
         'sinagog','surları','suru','kemeri','meydanı','çarşı','çarşısı','arasta','manastır','manastırı','şapel','tuz mağara','kaya mezar',
-        'kalıntı','harabe','şehitliği','kanal','yalı','yalısı','sarnıç','sarnıcı','hisar','hisarı','kümbet','kümbeti','imaret'],
+        'kalıntı','harabe','şehitliği','kanal','yalı','yalısı','sarnıç','sarnıcı','hisar','hisarı','kümbet','kümbeti','imaret',
+        'heykel','heykeli',' garı','opera','operası','park ','parkı','iskele','iskelesi','bahçe','bahçesi','kütüphane','mezarlığı','fener','feneri','tersane','sanat merkezi','pazarı'],
     en:['mosque','castle','fortress','museum','bridge','tomb','mausoleum','cave','church','cathedral','palace','fountain','madrasa',
         'tower','monument','bath','hammam','caravanserai','waterfall','canyon','lake','national park','ancient','theatre','theater',
-        'ruins','mansion','synagogue','square','bazaar','market','monastery','basilica','gate','walls','lighthouse','cistern','castle']
+        'ruins','mansion','synagogue','square','bazaar','market','monastery','basilica','gate','walls','lighthouse','cistern','castle',
+        'statue','opera house','park','garden','pier','library','cemetery','railway terminal']
   };
   // uzaktaki yerlerde öne çıksın diye ağırlık
   const STRONG = ['mağara','kanyon','şelale','milli park','millî park','tabiat parkı','antik','ören','kale','gölü','höyük','kaya mezar',
@@ -96,12 +98,25 @@ const Gezi = (() => {
       if(!near.length){ useGalata(); loadingNear=false; toast(T().none, 3200); return App.refresh(); }
       const ids = near.concat(farC).map(x=>x.pageid);
       const d = await wiki({action:'query', pageids:ids.join('|'), prop:'extracts|description|pageimages',
-                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail', pithumbsize:640});
+                           exintro:1, explaintext:1, exlimit:'max', piprop:'thumbnail|name', pithumbsize:640});
       const pages = d.query?.pages||[];
+      /* Fotoğraf yalnızca Commons'ta ve uygun lisanslıysa gösterilir; yazar/lisans etiketi eklenir */
+      const infos = {}, nmz = n => String(n||'').replace(/^File:/,'').replace(/_/g,' ');
+      const names = [...new Set(pages.map(p=>p.pageimage).filter(Boolean))];
+      if(names.length){ try{
+        const rr = await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*',
+          titles:names.map(n=>'File:'+nmz(n)).join('|'), prop:'imageinfo', iiprop:'url|extmetadata'}));
+        ((await rr.json()).query?.pages||[]).forEach(p=>{
+          const ii=(p.imageinfo||[])[0]; if(!ii) return; const m=ii.extmetadata||{}, lic=(m.LicenseShortName||{}).value||'';
+          if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,'')) || !LIC_OK.test(lic)) return;
+          infos[nmz(p.title)] = {page:ii.descriptionurl, lic, by:plain((m.Artist||{}).value).slice(0,40)||'Wikimedia Commons'};
+        });
+      }catch(e){} }
       const make = (x, isFar) => {
         const pg = pages.find(p=>p.pageid===x.pageid)||{};
         const t = {ad:x.title, kisa:pg.description||'', metin:cleanExtract(pg.extract)||x.title};
-        return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:pg.thumbnail?.source||'', wiki:true, far:isFar, title:x.title, [lang]:t};
+        const inf = pg.thumbnail && infos[nmz(pg.pageimage)];
+        return {id:'w'+x.pageid, lat:x.lat, lng:x.lon, img:inf?pg.thumbnail.source:'', pic:inf?{src:pg.thumbnail.source, ...inf}:undefined, wiki:true, far:isFar, title:x.title, [lang]:t};
       };
       center = {lat, lng};
       stops = orderRoute(near.map(x=>make(x,false)), pos || center);
@@ -461,9 +476,10 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('search').onsubmit = async e => {
       e.preventDefault(); const q = $('q').value.trim(); if(!q) return; $('q').blur();
       try{
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=${lang}&q=${encodeURIComponent(q)}`);
-        const j = await r.json(); if(!j.length) return toast(T().notFound);
-        loadNear(+j[0].lat, +j[0].lon, (j[0].display_name||q).split(',')[0]);
+        const j = await wiki({action:'query', generator:'search', gsrsearch:q, gsrlimit:6, prop:'coordinates', colimit:6});
+        const hit = (j.query?.pages||[]).filter(p=>p.coordinates&&p.coordinates.length).sort((a,b)=>a.index-b.index)[0];
+        if(!hit) return toast(T().notFound);
+        loadNear(hit.coordinates[0].lat, hit.coordinates[0].lon, hit.title.replace(/\s*\(.*\)$/,''));
       }catch(err){ toast(T().netErr); }
     };
     $('sample').onclick = () => {
