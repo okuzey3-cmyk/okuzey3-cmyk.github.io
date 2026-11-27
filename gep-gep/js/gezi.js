@@ -12,7 +12,7 @@ const Gezi = (() => {
   let map = null, mapReady = false, mapMarkers = [], needFit = true;
 
   const all = () => stops.concat(far);
-  const routeKey = () => mode==='galata' ? 'galata' : `r-${center.lat.toFixed(3)},${center.lng.toFixed(3)}`;
+  const routeKey = () => mode==='galata' ? (placeName==='Galata' ? 'galata' : 'c-'+placeName) : `r-${center.lat.toFixed(3)},${center.lng.toFixed(3)}`;
   const visited = () => new Set(Store.get('done-'+routeKey(), []));
   const setVisited = s => Store.set('done-'+routeKey(), [...s]);
   const txt = s => s[lang] || s.tr || s.en;
@@ -88,7 +88,7 @@ const Gezi = (() => {
     ['Üsküdar',41.0255,29.0153,[['Üsküdar',41.0255,29.0153],['Kuzguncuk',41.0370,29.0300],['Beylerbeyi',41.0420,29.0420],['Çengelköy',41.0510,29.0510]]],
     ['Kadıköy',40.9906,29.0245,[['Kadıköy',40.9906,29.0245],['Moda',40.9810,29.0260],['Haydarpaşa',41.0010,29.0200],['Fenerbahçe',40.9680,29.0360]]],
     ['Bakırköy',40.9795,28.8723,[['Bakırköy',40.9795,28.8723],['Ataköy',40.9810,28.8480],['Yeşilköy',40.9600,28.8260],['Florya',40.9760,28.7880]]],
-    ['Zeytinburnu',40.9930,28.9060,[['Zeytinburnu',40.9930,28.9060],['Kazlıçeşme',40.9920,28.9140],['Merkezefendi',41.0040,28.9100]]],
+    ['Zeytinburnu',40.9930,28.9060,[['Zeytinburnu',40.9930,28.9060],['Topkapı',41.0120,28.9180],['Kazlıçeşme',40.9920,28.9140],['Merkezefendi',41.0040,28.9100]]],
     ['Eyüpsultan',41.0480,28.9340,[['Eyüp',41.0480,28.9340],['Pierre Loti',41.0560,28.9330]]],
     ['Sarıyer',41.1668,29.0571,[['Sarıyer',41.1668,29.0571],['Emirgan',41.1070,29.0540],['İstinye',41.1130,29.0580],['Rumeli Hisarı',41.0850,29.0560]]],
     ['Adalar',40.8760,29.1290,[['Büyükada',40.8760,29.1290],['Heybeliada',40.8780,29.0980]]]
@@ -108,6 +108,8 @@ const Gezi = (() => {
   }
   async function showIntro(name){
     const box = $('semtInfo'); if(!box) return; const my = name; box.dataset.for = name;
+    const own = window.REHBER && REHBER.yazi[name];
+    if(own){ box.hidden = false; box.innerHTML = `<h4>${esc(name)}</h4><p>${esc(own[lang]||own.tr)}</p><small>${lang==='tr'?'Gep Gep rehberi':'Gep Gep guide'}</small>`; return; }
     const r = await semtIntro(name); if(box.dataset.for !== my) return;
     if(!r || !r.text){ box.hidden = true; return; }
     box.hidden = false; box.innerHTML = `<h4>${esc(r.title)}</h4><p>${esc(r.text)}</p><small><a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:inherit">${esc(T().src)}</a></small>`;
@@ -119,11 +121,19 @@ const Gezi = (() => {
     const ic = ILCE.find(i=>i[0]===ilce) || ILCE[1];
     el.innerHTML = ILCE.map(([n])=>`<button data-ilce="${n}" class="${ic[0]===n?'on':''}">${n}</button>`).join('');
     el2.innerHTML = ic[3].map(([n])=>`<button data-semt="${n}" class="${placeName===n?'on':''}">${n}</button>`).join('');
-    const go = (n, la, lo) => { Voice.stop(); manual = false; storyOpen = false; semtName = n; loadNear(la, lo, n); showIntro(n); window.scrollTo({top:0, behavior:'smooth'}); };
+    const go = (n, la, lo) => { picked = true; Voice.stop(); manual = false; storyOpen = false; semtName = n; loadNear(la, lo, n); showIntro(n); window.scrollTo({top:0, behavior:'smooth'}); };
     el.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ILCE.find(i=>i[0]===b.dataset.ilce); ilce = x[0]; go(x[0], x[1], x[2]); });
     el2.querySelectorAll('button').forEach(b=>b.onclick = () => { const x = ic[3].find(s=>s[0]===b.dataset.semt); go(x[0], x[1], x[2]); });
   }
   function useGalata(){ stops=GALATA; far=[]; mode='galata'; placeName='Galata'; center=null; selected=GALATA[0].id; needFit=true; }
+  /* Elle yazılmış rehber (Fatih, Zeytinburnu...): mode 'galata' = seçme/elle yazılmış içerik */
+  let picked = false;
+  function useCurated(name){
+    if(name==='Galata') return useGalata();
+    const list = window.REHBER && REHBER.stopsFor(name); if(!list) return useGalata();
+    stops = orderRoute(list.slice(), pos || list[0]); far=[]; mode='galata'; placeName=name; center=null;
+    selected = stops[0].id; needFit = true; loadCuratedPics();
+  }
 
   /* ---------- OpenStreetMap'ten yakın yerler (Vikipedi'de maddesi olmayan cami, anıt, iskele, park...) ---------- */
   const KIND = {
@@ -168,6 +178,7 @@ const Gezi = (() => {
   async function loadNear(lat, lng, label){
     if(!GEP.nearWeb){ useGalata(); manual=false; return App.refresh(); }   /* Vikipedi'den yakın yer çekme kapalı (ticari temizlik) */
     if(label==='Galata' || (!label && dist({lat,lng}, GALATA[0]) < 1500)){ useGalata(); manual=false; return App.refresh(); }
+    if(label && window.REHBER && REHBER.stopsFor(label)){ useCurated(label); manual=false; storyOpen=false; return App.refresh(); }
     loadingNear=true; netErr=false; Voice.stop(); App.refresh();
     try{
       const osmP = osmPlaces(lat, lng);
@@ -238,7 +249,7 @@ const Gezi = (() => {
 
   function openSaved(r, silent){
     stops = r.stops; far = r.far||[]; center = r.center; placeName = r.place; mode = r.mode||'near';
-    if(mode==='galata'){ useGalata(); }
+    if(mode==='galata'){ useCurated(r.place||'Galata'); }
     manual = false; storyOpen = false; needFit = true; netErr = false; selected = autoPick();
     if(!silent){ App.show('gezi'); App.refresh(); }
   }
@@ -274,7 +285,7 @@ const Gezi = (() => {
     navigator.geolocation.watchPosition(p=>{
       pos = {lat:p.coords.latitude, lng:p.coords.longitude}; geoState='on';
       Sky.setLocation && Sky.setLocation(pos);
-      if(first){ first=false; if(!center || mode==='galata') loadNear(pos.lat, pos.lng); }
+      if(first){ first=false; if(!picked && (!center || placeName==='Galata')) loadNear(pos.lat, pos.lng); }
       checkArrival();
       if(!manual && !Voice.id && !loadingNear) selected = autoPick();
       if(App.tab==='gezi') App.refresh();
@@ -417,7 +428,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       onShare: r => {
         if(r.hata) return;
         const u = T();
-        Share.go({text:u.shSeen(r.ad), cardOpts:{eyebrow:u.cardSeen + (placeName&&mode!=='galata'?' · '+placeName:''), title:r.ad, line:r.kisa||'', img:r._shot}});
+        Share.go({text:u.shSeen(r.ad), cardOpts:{eyebrow:u.cardSeen + (placeName?' · '+placeName:''), title:r.ad, line:r.kisa||'', img:r._shot}});
       }
     });
   }
@@ -429,7 +440,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('place').textContent = placeName;
     $('eyebrow').textContent = mode==='galata' ? u.eyebrow : u.eyebrowNear;
     const km = routeLength();
-    $('intro').textContent = mode==='galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
+    $('intro').textContent = placeName==='Galata' ? u.intro : u.introNear(stops.length, fmt(km), km < 6000);
     $('routeTitle').textContent = u.route; $('routeMeta').textContent = u.stopsN(stops.length);
     $('mapTitle').textContent = u.mapTitle; $('mapMe').textContent = pos ? u.mapMe : '';
     renderSemt();
@@ -477,7 +488,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
         <div class="tag">${esc(label)}</div>
         ${idx>=0?`<div class="pos">${idx+1} / ${stops.length}</div>`:''}
         <div class="cap ${fresh?'in':''}"><h2>${esc(t.ad)}</h2>
-          <div class="meta">${esc(t.kisa)}${d!==null && !isHere && !s.far ? ' · '+fmt(d) : ''}</div></div>
+          <div class="meta">${s.gizli?'★ ':''}${esc(t.kisa)}${d!==null && !isHere && !s.far ? ' · '+fmt(d) : ''}</div></div>
       </div>
       <div class="row">
         <button class="play" data-play="${esc(s.id)}">${Voice.is(s.id)?ICON.pause:ICON.play}<b>${esc(Voice.is(s.id)?u.stop:u.listen)}</b><span>${minutes(t.metin)} ${esc(String(u.minutes).split(" ")[0])}</span></button>
@@ -499,7 +510,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('route').innerHTML = stops.map((x,i)=>{ const tx=txt(x), done=v.has(x.id); return `
       <button class="stop ${x.id===selected?'sel':''} ${done?'visited':''}" data-id="${x.id}">
         ${th(x, done?'✓':i+1)}
-        <span class="t"><b>${esc(tx.ad)}</b><span>${esc(tx.kisa || (pos?fmt(dist(pos,x)):''))}</span></span>
+        <span class="t"><b>${esc(tx.ad)}</b><span>${x.gizli?"★ ":""}${esc(tx.kisa || (pos?fmt(dist(pos,x)):''))}</span></span>
         <span class="d">${pos && tx.kisa ? fmt(dist(pos,x)) : ''}</span>
       </button>`; }).join('');
 
@@ -510,7 +521,7 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     $('far').innerHTML = far.map(x=>{ const tx=txt(x), done=v.has(x.id); return `
       <button class="stop ${x.id===selected?'sel':''} ${done?'visited':''}" data-id="${x.id}">
         ${th(x, done?'✓':'★')}
-        <span class="t"><b>${esc(tx.ad)}</b><span>${esc(tx.kisa||'')}</span></span>
+        <span class="t"><b>${esc(tx.ad)}</b><span>${x.gizli?"★ ":""}${esc(tx.kisa||'')}</span></span>
         <span class="d">${ref?fmt(dist(ref,x)):''}<br>${esc(ref && dist(ref,x)>3000?u.drive:u.walk)}</span>
       </button>`; }).join('');
 
@@ -571,6 +582,39 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
     if(changed || GALATA.some(s=>s.img)) App.refresh();
   }
 
+  /* ---------- Rehber durak fotoğrafları: Vikipedi maddesinin ana görseli, Commons lisansı denetlenir ---------- */
+  async function loadCuratedPics(){
+    const need = stops.filter(s=>s.wp && !s.img);
+    need.forEach(s=>{ const h = Store.get('pic5-'+s.id, null); if(h){ s.img=h.src; s.pic=h; } });
+    const todo = need.filter(s=>!s.img); if(!todo.length) return;
+    try{
+      const j = await (await fetch('https://tr.wikipedia.org/w/api.php?' + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*', redirects:1,
+        titles:todo.map(s=>s.wp).join('|'), prop:'pageimages', piprop:'thumbnail|name', pithumbsize:900}))).json();
+      const q = j.query||{}, alias = {};
+      (q.normalized||[]).concat(q.redirects||[]).forEach(x=>alias[x.from]=x.to);
+      const fin = t => { let k=t, n=0; while(alias[k] && n++<3) k=alias[k]; return k; };
+      const byTitle = {}; (q.pages||[]).forEach(p=>byTitle[p.title]=p);
+      const nmz = n => String(n||'').replace(/^File:/,'').replace(/_/g,' ');
+      const names = [...new Set((q.pages||[]).map(p=>p.pageimage).filter(Boolean))];
+      if(!names.length) return;
+      const c = await (await fetch('https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({action:'query', format:'json', formatversion:'2', origin:'*',
+        titles:names.map(n=>'File:'+nmz(n)).join('|'), prop:'imageinfo', iiprop:'url|extmetadata'}))).json();
+      const ok = {};
+      ((c.query||{}).pages||[]).forEach(p=>{
+        const ii=(p.imageinfo||[])[0]; if(!ii) return; const m=ii.extmetadata||{}, lic=(m.LicenseShortName||{}).value||'';
+        if((m.NonFree||{}).value==='true' || /NC|ND/i.test(lic.replace(/CC BY-SA/i,'')) || !LIC_OK.test(lic)) return;
+        ok[nmz(p.title)] = {page:ii.descriptionurl, lic, by:plain((m.Artist||{}).value).slice(0,40)||'Wikimedia Commons'};
+      });
+      let changed = false;
+      todo.forEach(s=>{
+        const p = byTitle[fin(s.wp)]; if(!p || !p.thumbnail) return;
+        const inf = ok[nmz(p.pageimage)]; if(!inf) return;
+        const pic = {src:p.thumbnail.source, ...inf}; s.img = pic.src; s.pic = pic; Store.set('pic5-'+s.id, pic); changed = true;
+      });
+      if(changed) App.refresh();
+    }catch(e){}
+  }
+
   /* ---------- Bağlantılar ---------- */
   function init(){
     if(!GEP.nearWeb){ $('search').hidden = true; $('note').hidden = true; }
@@ -613,8 +657,8 @@ If you cannot identify it confidently, set "emin": false, describe what you see 
       return;
     }
     const s = all().find(x=>x.id===selected) || stops[0], t = txt(s);
-    Share.go({text:u.shStop(t.ad, mode==='galata' ? 'Galata' : placeName),
-      cardOpts:{eyebrow:`${u.cardStop} · ${mode==='galata'?'Galata':placeName}`, title:t.ad, line:t.kisa || firstSentence(t.metin), img:s.img,
+    Share.go({text:u.shStop(t.ad, placeName),
+      cardOpts:{eyebrow:`${u.cardStop} · ${placeName}`, title:t.ad, line:t.kisa || firstSentence(t.metin), img:s.img,
                 badge: visited().has(s.id) ? '✓ '+u.visitedTag : ''}});
   }
 
